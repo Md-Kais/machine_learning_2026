@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A beginner-friendly linear SVM visualization for two-feature type-2 diabetes screening education."
+    />
+    <title>SVM Triage Lab — Diabetes Screening Teaching Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main-content" aria-label="SVM Triage Lab home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span>SVM Triage Lab</span>
+      </a>
+      <span class="safety-badge">Teaching demo · not a diagnosis</span>
+    </header>
+
+    <main id="main-content" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Type-2 diabetes screening · linear SVM</p>
+          <h1 id="page-title">See the line.<br />Understand the margin.</h1>
+        </div>
+        <p>
+          Enter a fasting laboratory glucose result and BMI. The graph places
+          your point beside the training data and shows how a straight SVM line
+          creates a middle follow-up zone.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="SVM diabetes screening teaching tool">
+        <aside class="control-panel">
+          <form id="screening-form" novalidate>
+            <div class="section-heading">
+              <span class="step-number">01</span>
+              <div>
+                <p class="section-kicker">Two features</p>
+                <h2>Place your point</h2>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="glucose">Fasting blood glucose</label>
+              <div class="input-wrap">
+                <input
+                  id="glucose"
+                  name="glucose"
+                  type="number"
+                  inputmode="decimal"
+                  min="50"
+                  max="300"
+                  step="1"
+                  value="112"
+                  aria-describedby="glucose-help glucose-error"
+                  required
+                />
+                <span class="unit">mg/dL</span>
+              </div>
+              <small id="glucose-help">Use a fasting laboratory result, 50–300.</small>
+              <small class="error-message" id="glucose-error" role="alert"></small>
+            </div>
+
+            <div class="field-group">
+              <label for="bmi">Body Mass Index</label>
+              <div class="input-wrap">
+                <input
+                  id="bmi"
+                  name="bmi"
+                  type="number"
+                  inputmode="decimal"
+                  min="12"
+                  max="60"
+                  step="0.1"
+                  value="29"
+                  aria-describedby="bmi-help bmi-error"
+                  required
+                />
+                <span class="unit">BMI</span>
+              </div>
+              <small id="bmi-help">BMI is a risk clue, not a diabetes test.</small>
+              <small class="error-message" id="bmi-error" role="alert"></small>
+            </div>
+
+            <button class="primary-button" id="screen-button" type="submit" disabled>
+              Screen and plot <span aria-hidden="true">→</span>
+            </button>
+            <!-- Quick samples use the same validation and prediction path as typing. -->
+            <div class="preset-row" aria-label="Quick screening examples">
+              <button class="example-button" type="button" data-glucose="85" data-bmi="24">
+                Try lower-signal sample
+              </button>
+              <button class="example-button" type="button" data-glucose="150" data-bmi="33">
+                Try higher-signal sample
+              </button>
+            </div>
+            <p class="model-status" id="model-status" role="status">
+              Loading the SVM…
+            </p>
+          </form>
+
+          <section class="result-panel" id="result-panel" data-zone="margin" aria-live="polite">
+            <p class="result-label">Teaching result</p>
+            <h2 id="zone-name">Loading…</h2>
+            <p id="result-message">The result will appear when the model loads.</p>
+            <div class="score-row">
+              <span>SVM position</span>
+              <strong id="score-value">—</strong>
+            </div>
+            <small>The SVM position is distance-like, not a probability.</small>
+            <p class="clinical-reference" id="clinical-reference"></p>
+          </section>
+        </aside>
+
+        <section class="graph-panel" aria-labelledby="graph-heading">
+          <div class="graph-heading">
+            <div>
+              <p class="section-kicker">Feature 1 × Feature 2</p>
+              <h2 id="graph-heading">Glucose × BMI decision map</h2>
+            </div>
+            <p id="graph-summary" class="graph-summary" aria-live="polite">
+              Loading the example…
+            </p>
+          </div>
+
+          <div class="legend" aria-label="Graph legend">
+            <span><i class="legend-circle"></i>Lower training example</span>
+            <span><i class="legend-square"></i>Higher training example</span>
+            <span><i class="legend-ring"></i>Support example</span>
+            <span><i class="legend-diamond"></i>Your input</span>
+          </div>
+
+          <div class="plot-wrap" id="plot-wrap">
+            <svg
+              id="svm-chart"
+              class="svm-chart"
+              role="img"
+              aria-labelledby="svm-chart-title svm-chart-description"
+            >
+              <title id="svm-chart-title">Glucose and BMI SVM margin graph</title>
+              <desc id="svm-chart-description">
+                The graph will show the teaching data, SVM separator, margin,
+                clinical glucose references, and the current input.
+              </desc>
+            </svg>
+          </div>
+
+          <div class="line-key" aria-label="Line explanation">
+            <span><i class="key-line key-line-solid"></i>Learned center line</span>
+            <span><i class="key-line key-line-margin"></i>SVM margin edges</span>
+            <span><i class="key-line key-line-clinical"></i>Clinical glucose references</span>
+          </div>
+
+          <p class="graph-note">
+            The orange band is the SVM margin: the uncertain area between the two
+            learned sides. The vertical dotted lines at 100 and 126 mg/dL are
+            clinical fasting-glucose references, not SVM predictions.
+          </p>
+        </section>
+      </section>
+
+      <section class="lesson" aria-labelledby="lesson-heading">
+        <div class="lesson-intro">
+          <p class="eyebrow">SVM for a young programmer</p>
+          <h2 id="lesson-heading">Imagine a road between two groups of dots.</h2>
+          <p>
+            SVM draws the widest straight road it can. The center stripe is the
+            separator. The road itself is the margin, where this demo asks for
+            further diagnostic testing.
+          </p>
+        </div>
+        <ol class="lesson-steps">
+          <li><span>1</span><strong>Plot</strong><p>Put glucose on x and BMI on y.</p></li>
+          <li><span>2</span><strong>Push</strong><p>Mistakes nudge the straight line during training.</p></li>
+          <li><span>3</span><strong>Check</strong><p>See which side—or margin—holds the new point.</p></li>
+        </ol>
+      </section>
+
+      <section class="safety-note" aria-labelledby="safety-heading">
+        <h2 id="safety-heading">Use the graph to learn, not to diagnose.</h2>
+        <p>
+          CDC lists fasting plasma glucose of 99 mg/dL or below as normal,
+          100–125 as prediabetes, and 126 or above as the diabetes threshold.
+          Diagnosis usually requires confirmation. BMI can add risk context but
+          cannot diagnose diabetes. Pregnancy, symptoms, medicines, age, and
+          other health information can change what testing is appropriate.
+        </p>
+      </section>
+
+      <footer>
+        <p>Educational synthetic dataset · adult, non-pregnancy teaching example</p>
+        <nav aria-label="Medical references">
+          <a href="https://www.cdc.gov/diabetes/diabetes-testing/index.html">CDC diabetes testing</a>
+          <a href="https://www.niddk.nih.gov/health-information/diabetes/overview/tests-diagnosis">NIDDK tests and diagnosis</a>
+          <a href="https://www.niddk.nih.gov/health-information/diabetes/overview/risk-factors-type-2-diabetes">NIDDK risk factors</a>
+        </nav>
+      </footer>
+    </main>
+
+    <script src="svm.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,318 @@
+{
+  "model_type": "linear_svm",
+  "feature_names": [
+    "Fasting Blood Glucose (mg/dL)",
+    "Body Mass Index (BMI)"
+  ],
+  "means": [
+    122.5875,
+    31.725
+  ],
+  "scales": [
+    37.898695145743474,
+    7.716824152460648
+  ],
+  "weights": [
+    2.5946847960262183,
+    0.05479903424396023
+  ],
+  "bias": 0.6838134571020199,
+  "margin": {
+    "lower": -1,
+    "center": 0,
+    "upper": 1
+  },
+  "zones": {
+    "lower": "Lower screening signal",
+    "margin": "Pre-diabetic / Further Diagnostic Needed",
+    "higher": "Higher screening signal"
+  },
+  "clinical_glucose_reference": {
+    "normal_max": 99,
+    "prediabetes_min": 100,
+    "prediabetes_max": 125,
+    "diabetes_min": 126
+  },
+  "training_examples": [
+    {
+      "fasting_glucose_mg_dl": 72.0,
+      "bmi": 19.0,
+      "label": "lower_reference",
+      "score": -2.869957136657906,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 75.0,
+      "bmi": 22.5,
+      "label": "lower_reference",
+      "score": -2.6397116981764115,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 78.0,
+      "bmi": 26.0,
+      "label": "lower_reference",
+      "score": -2.409466259694916,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 80.0,
+      "bmi": 30.0,
+      "label": "lower_reference",
+      "score": -2.244133897705254,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 82.0,
+      "bmi": 34.0,
+      "label": "lower_reference",
+      "score": -2.078801535715591,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 84.0,
+      "bmi": 38.0,
+      "label": "lower_reference",
+      "score": -1.9134691737259284,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 86.0,
+      "bmi": 42.0,
+      "label": "lower_reference",
+      "score": -1.7481368117362655,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 88.0,
+      "bmi": 20.0,
+      "label": "lower_reference",
+      "score": -1.7674367365777925,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 90.0,
+      "bmi": 23.5,
+      "label": "lower_reference",
+      "score": -1.6056549954887296,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 92.0,
+      "bmi": 27.0,
+      "label": "lower_reference",
+      "score": -1.4438732543996666,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 94.0,
+      "bmi": 31.0,
+      "label": "lower_reference",
+      "score": -1.2785408924100041,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 96.0,
+      "bmi": 35.0,
+      "label": "lower_reference",
+      "score": -1.1132085304203416,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 98.0,
+      "bmi": 39.0,
+      "label": "lower_reference",
+      "score": -0.947876168430679,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 99.0,
+      "bmi": 22.0,
+      "label": "lower_reference",
+      "score": -1.0001335816586399,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 99.0,
+      "bmi": 25.0,
+      "label": "lower_reference",
+      "score": -0.9788298562550409,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 98.5,
+      "bmi": 28.5,
+      "label": "lower_reference",
+      "score": -0.9882073586470587,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 98.0,
+      "bmi": 32.5,
+      "label": "lower_reference",
+      "score": -0.9940342401384764,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 97.5,
+      "bmi": 36.5,
+      "label": "lower_reference",
+      "score": -0.9998611216298937,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 97.0,
+      "bmi": 40.5,
+      "label": "lower_reference",
+      "score": -1.0056880031213113,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 96.5,
+      "bmi": 44.0,
+      "label": "lower_reference",
+      "score": -1.0150655055133289,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 126.0,
+      "bmi": 44.0,
+      "label": "higher_reference",
+      "score": 1.0046135675634194,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 126.0,
+      "bmi": 40.0,
+      "label": "higher_reference",
+      "score": 0.9762086003586209,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 126.5,
+      "bmi": 36.0,
+      "label": "higher_reference",
+      "score": 0.9820354818500385,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 127.0,
+      "bmi": 32.0,
+      "label": "higher_reference",
+      "score": 0.9878623633414563,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 127.5,
+      "bmi": 28.0,
+      "label": "higher_reference",
+      "score": 0.9936892448328739,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 128.0,
+      "bmi": 24.0,
+      "label": "higher_reference",
+      "score": 0.9995161263242915,
+      "is_support_example": true
+    },
+    {
+      "fasting_glucose_mg_dl": 128.0,
+      "bmi": 20.0,
+      "label": "higher_reference",
+      "score": 0.9711111591194932,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 142.0,
+      "bmi": 22.5,
+      "label": "higher_reference",
+      "score": 1.947356027116542,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 146.0,
+      "bmi": 26.0,
+      "label": "higher_reference",
+      "score": 2.2460651629904693,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 150.0,
+      "bmi": 29.5,
+      "label": "higher_reference",
+      "score": 2.5447742988643967,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 154.0,
+      "bmi": 33.0,
+      "label": "higher_reference",
+      "score": 2.843483434738324,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 158.0,
+      "bmi": 37.0,
+      "label": "higher_reference",
+      "score": 3.145743191512851,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 162.0,
+      "bmi": 41.0,
+      "label": "higher_reference",
+      "score": 3.4480029482873777,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 168.0,
+      "bmi": 45.0,
+      "label": "higher_reference",
+      "score": 3.8871900998467694,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 174.0,
+      "bmi": 21.0,
+      "label": "higher_reference",
+      "score": 4.127542480972572,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 180.0,
+      "bmi": 25.0,
+      "label": "higher_reference",
+      "score": 4.566729632531962,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 186.0,
+      "bmi": 30.0,
+      "label": "higher_reference",
+      "score": 5.013018025892554,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 192.0,
+      "bmi": 35.0,
+      "label": "higher_reference",
+      "score": 5.459306419253144,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 198.0,
+      "bmi": 40.0,
+      "label": "higher_reference",
+      "score": 5.905594812613735,
+      "is_support_example": false
+    },
+    {
+      "fasting_glucose_mg_dl": 204.0,
+      "bmi": 44.0,
+      "label": "higher_reference",
+      "score": 6.3447819641731265,
+      "is_support_example": false
+    }
+  ]
+}

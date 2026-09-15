@@ -1,0 +1,330 @@
+{
+  "model_type": "decision_tree_classifier",
+  "algorithm": "CART-style binary tree using Gini impurity",
+  "max_depth": 2,
+  "features": {
+    "systolic_bp_mm_hg": {
+      "title": "Systolic blood pressure",
+      "unit": "mmHg"
+    },
+    "max_heart_rate_bpm": {
+      "title": "Maximum heart rate",
+      "unit": "bpm"
+    }
+  },
+  "labels": {
+    "low_risk_discharge": "Low Risk / Discharge",
+    "high_risk_icu": "High Risk / Admit to ICU"
+  },
+  "tree": {
+    "id": "node-1",
+    "depth": 0,
+    "samples": 48,
+    "class_counts": {
+      "low_risk_discharge": 36,
+      "high_risk_icu": 12
+    },
+    "prediction": "low_risk_discharge",
+    "impurity": 0.375,
+    "is_leaf": false,
+    "feature": "systolic_bp_mm_hg",
+    "feature_title": "Systolic blood pressure",
+    "unit": "mmHg",
+    "threshold": 140.0,
+    "left": {
+      "id": "node-2",
+      "depth": 1,
+      "samples": 24,
+      "class_counts": {
+        "low_risk_discharge": 24,
+        "high_risk_icu": 0
+      },
+      "prediction": "low_risk_discharge",
+      "impurity": 0.0,
+      "is_leaf": true
+    },
+    "right": {
+      "id": "node-3",
+      "depth": 1,
+      "samples": 24,
+      "class_counts": {
+        "low_risk_discharge": 12,
+        "high_risk_icu": 12
+      },
+      "prediction": "low_risk_discharge",
+      "impurity": 0.5,
+      "is_leaf": false,
+      "feature": "max_heart_rate_bpm",
+      "feature_title": "Maximum heart rate",
+      "unit": "bpm",
+      "threshold": 115.0,
+      "left": {
+        "id": "node-4",
+        "depth": 2,
+        "samples": 12,
+        "class_counts": {
+          "low_risk_discharge": 12,
+          "high_risk_icu": 0
+        },
+        "prediction": "low_risk_discharge",
+        "impurity": 0.0,
+        "is_leaf": true
+      },
+      "right": {
+        "id": "node-5",
+        "depth": 2,
+        "samples": 12,
+        "class_counts": {
+          "low_risk_discharge": 0,
+          "high_risk_icu": 12
+        },
+        "prediction": "high_risk_icu",
+        "impurity": 0.0,
+        "is_leaf": true
+      }
+    }
+  },
+  "training_examples": [
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 90.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 105.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 120.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 135.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 145.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 155.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 170.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 60.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 85.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 110.0,
+      "label": "low_risk_discharge"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 120.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 140.0,
+      "label": "high_risk_icu"
+    },
+    {
+      "systolic_bp_mm_hg": 180.0,
+      "max_heart_rate_bpm": 160.0,
+      "label": "high_risk_icu"
+    }
+  ],
+  "warning": "Synthetic programming lesson only. Never use two vital signs to discharge, admit, diagnose, or treat a real patient."
+}

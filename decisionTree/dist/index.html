@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A beginner-friendly Decision Tree visualization using a synthetic cardiac triage teaching scenario."
+    />
+    <title>Decision Tree ER Lab — Synthetic Cardiac Triage Lesson</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main-content" aria-label="Decision Tree ER Lab home">
+        <span class="brand-mark" aria-hidden="true">DT</span>
+        <span>Decision Tree ER Lab</span>
+      </a>
+      <span class="demo-badge">Synthetic lesson · never clinical use</span>
+    </header>
+
+    <aside class="emergency-banner" aria-label="Emergency warning">
+      <strong>Possible real heart-attack symptoms?</strong>
+      Do not use this page. Contact your local emergency services immediately.
+    </aside>
+
+    <main id="main-content" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">White-box machine learning</p>
+          <h1 id="page-title">Follow every<br />yes-or-no branch.</h1>
+        </div>
+        <p>
+          Change two synthetic vital signs. The tree shows its exact questions,
+          rectangular decision regions, and final toy label—nothing is hidden.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Interactive Decision Tree lesson">
+        <aside class="control-panel">
+          <form id="triage-form" novalidate>
+            <div class="section-heading">
+              <span class="section-number">01</span>
+              <div>
+                <p class="section-kicker">Synthetic case</p>
+                <h2>Enter two numbers</h2>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="systolic-bp">Systolic blood pressure</label>
+              <div class="input-wrap">
+                <input
+                  id="systolic-bp"
+                  name="systolic-bp"
+                  type="number"
+                  inputmode="decimal"
+                  min="90"
+                  max="180"
+                  step="1"
+                  value="155"
+                  aria-describedby="systolic-bp-help systolic-bp-error"
+                  required
+                />
+                <span class="unit">mmHg</span>
+              </div>
+              <small id="systolic-bp-help">Teaching range: 90–180.</small>
+              <small id="systolic-bp-error" class="error-message" role="alert"></small>
+            </div>
+
+            <div class="field-group">
+              <label for="max-heart-rate">Maximum heart rate</label>
+              <div class="input-wrap">
+                <input
+                  id="max-heart-rate"
+                  name="max-heart-rate"
+                  type="number"
+                  inputmode="decimal"
+                  min="60"
+                  max="160"
+                  step="1"
+                  value="130"
+                  aria-describedby="max-heart-rate-help max-heart-rate-error"
+                  required
+                />
+                <span class="unit">bpm</span>
+              </div>
+              <small id="max-heart-rate-help">Teaching range: 60–160.</small>
+              <small id="max-heart-rate-error" class="error-message" role="alert"></small>
+            </div>
+
+            <button id="evaluate-button" class="primary-button" type="submit" disabled>
+              Follow the tree <span aria-hidden="true">→</span>
+            </button>
+            <!-- Both samples still use the normal validation and prediction path. -->
+            <div class="preset-row" aria-label="Quick synthetic examples">
+              <button class="preset-button" type="button" data-bp="120" data-heart-rate="100">
+                Try blue toy case
+              </button>
+              <button class="preset-button" type="button" data-bp="155" data-heart-rate="130">
+                Try red toy case
+              </button>
+            </div>
+            <p id="model-status" class="model-status" role="status">Loading the tree…</p>
+          </form>
+
+          <section id="result-panel" class="result-panel" data-result="high" aria-live="polite">
+            <p class="result-label">Toy target label</p>
+            <h2 id="result-name">Loading…</h2>
+            <p id="result-explanation"></p>
+            <div class="path-rule">
+              <span>Current rule</span>
+              <strong id="path-summary">—</strong>
+            </div>
+          </section>
+
+          <section class="path-panel" aria-labelledby="path-heading">
+            <p class="section-kicker">White-box explanation</p>
+            <h2 id="path-heading">Your decision path</h2>
+            <ol id="decision-path" class="decision-path" aria-live="polite"></ol>
+          </section>
+        </aside>
+
+        <section class="graph-panel" aria-labelledby="graph-heading">
+          <div class="graph-heading">
+            <div>
+              <p class="section-kicker">Vertical + horizontal cuts</p>
+              <h2 id="graph-heading">Axis-aligned decision map</h2>
+            </div>
+            <p id="graph-summary" class="graph-summary" aria-live="polite">
+              Loading the example…
+            </p>
+          </div>
+
+          <div class="legend" aria-label="Graph legend">
+            <span><i class="legend-circle"></i>Blue toy label</span>
+            <span><i class="legend-square"></i>Red toy label</span>
+            <span><i class="legend-line"></i>Tree split</span>
+            <span><i class="legend-diamond"></i>Your input</span>
+          </div>
+
+          <div id="plot-wrap" class="plot-wrap">
+            <svg
+              id="decision-chart"
+              class="decision-chart"
+              role="img"
+              aria-labelledby="decision-chart-title decision-chart-description"
+            >
+              <title id="decision-chart-title">Decision Tree vital-sign map</title>
+              <desc id="decision-chart-description">
+                Synthetic training examples and axis-aligned Decision Tree regions.
+              </desc>
+            </svg>
+          </div>
+
+          <p class="graph-note">
+            Split 1 is vertical because it asks about the x-axis. Split 2 is
+            horizontal and appears only inside Split 1's right branch. The
+            brighter rectangle is the leaf reached by the current input.
+          </p>
+        </section>
+      </section>
+
+      <section class="lesson" aria-labelledby="lesson-heading">
+        <div>
+          <p class="eyebrow">The whole learned model</p>
+          <h2 id="lesson-heading">A tree is just nested questions.</h2>
+          <p>
+            Training tries halfway points and chooses the question that makes
+            the two child groups least mixed. This tiny tree stops after two levels.
+          </p>
+        </div>
+        <pre aria-label="Complete learned toy rule"><code>IF systolic BP ≤ 140:
+  RETURN blue toy label
+ELSE:
+  IF maximum heart rate ≤ 115:
+    RETURN blue toy label
+  ELSE:
+    RETURN red toy label</code></pre>
+      </section>
+
+      <section class="safety-note" aria-labelledby="safety-heading">
+        <h2 id="safety-heading">Why this cannot triage a real patient</h2>
+        <p>
+          Real acute cardiac evaluation uses symptoms, history, physical
+          examination, ECG, serial troponin, structured risk pathways, and other
+          findings. The `140` and `115` cuts here were learned from a made-up grid
+          created only to demonstrate rectangular Decision Tree boundaries.
+        </p>
+      </section>
+
+      <footer>
+        <p>Programming education only · synthetic data · no patient records</p>
+        <nav aria-label="Medical safety references">
+          <a href="https://www.acc.org/Latest-in-Cardiology/ten-points-to-remember/2021/10/27/14/06/2021-Guideline-for-Chest-Pain-gl_chestpain">ACC/AHA chest-pain guideline summary</a>
+          <a href="https://www.nhlbi.nih.gov/health/heart-attack/symptoms">NHLBI heart-attack symptoms</a>
+        </nav>
+      </footer>
+    </main>
+
+    <script src="tree.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>

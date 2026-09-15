@@ -1,0 +1,22 @@
+# Temporary files
+tmp/
+
+# Git metadata
+**/.git/
+
+# OpenAI files
+**/.openai/
+
+# Python virtual environments
+**/.venv/
+
+# Vercel
+**/.vercel/
+
+# Python cache
+**/__pycache__/
+**/.pytest_cache/
+*.pyc
+
+# Logs
+*.log

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="An interactive 2D perceptron learning lab for exploring student exam pass and fail classification."
+    >
+    <title>Student Perceptron Lab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <a class="skip-link" href="#lab">Skip to the learning lab</a>
+
+    <header class="app-header">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">P</div>
+        <div>
+          <p class="eyebrow">Neural Network Design · Chapter 4</p>
+          <h1>Student Perceptron Lab</h1>
+        </div>
+      </div>
+      <div class="chapter-chip">
+        <span class="chapter-chip__dot" aria-hidden="true"></span>
+        Single-neuron learning rule
+      </div>
+    </header>
+
+    <section class="how-to" aria-labelledby="how-to-title">
+      <div class="how-to__label">
+        <span aria-hidden="true">✦</span>
+        <strong id="how-to-title">How to Play</strong>
+      </div>
+      <ol class="how-to__steps">
+        <li>
+          <span class="step-number">1</span>
+          <span><strong>Place students</strong> by clicking the chart.</span>
+        </li>
+        <li>
+          <span class="step-number">2</span>
+          <span><strong>Train the AI</strong> and watch each correction.</span>
+        </li>
+        <li>
+          <span class="step-number">3</span>
+          <span><strong>Read the line</strong> separating green from red.</span>
+        </li>
+      </ol>
+    </section>
+
+    <main id="lab" class="lab-layout">
+      <section class="canvas-card" aria-labelledby="canvas-heading">
+        <div class="card-heading canvas-heading-row">
+          <div>
+            <p class="section-kicker">Interactive feature space</p>
+            <h2 id="canvas-heading">The classroom map</h2>
+          </div>
+          <span id="modelBadge" class="status-badge status-badge--ready">
+            <span class="status-badge__dot" aria-hidden="true"></span>
+            Ready to explore
+          </span>
+        </div>
+
+        <div class="canvas-frame">
+          <canvas
+            id="perceptronCanvas"
+            width="920"
+            height="680"
+            tabindex="0"
+            role="img"
+            aria-label="Interactive graph of study hours and class attendance. Click to add a student."
+            aria-describedby="canvas-instructions"
+          ></canvas>
+          <div class="canvas-corner-note" aria-hidden="true">a = hardlim(Wp + b)</div>
+        </div>
+
+        <div class="canvas-footer">
+          <p id="canvas-instructions" class="canvas-instructions">
+            Left-click adds the selected class. Right-click always adds a failing student.
+            Keyboard: arrows move the cursor; Enter places a point.
+          </p>
+          <output id="coordinateReadout" class="coordinate-readout" aria-live="polite">
+            Pointer: —
+          </output>
+        </div>
+
+        <div class="legend" aria-label="Chart legend">
+          <span><i class="legend-dot legend-dot--pass"></i> Pass · target 1</span>
+          <span><i class="legend-dot legend-dot--fail"></i> Fail · target 0</span>
+          <span><i class="legend-line"></i> Decision boundary</span>
+          <span><i class="legend-arrow">↑</i> Weight direction</span>
+        </div>
+      </section>
+
+      <aside class="control-stack" aria-label="Perceptron controls and telemetry">
+        <section class="control-card" aria-labelledby="data-heading">
+          <div class="card-heading card-heading--compact">
+            <div>
+              <p class="section-kicker">1 · Build a data set</p>
+              <h2 id="data-heading">Choose who you place</h2>
+            </div>
+            <span id="pointCount" class="count-chip">0 students</span>
+          </div>
+
+          <label class="class-switch" for="classMode">
+            <input id="classMode" type="checkbox" role="switch" aria-describedby="modeHint">
+            <span class="class-switch__track" aria-hidden="true">
+              <span class="class-switch__thumb"></span>
+            </span>
+            <span>
+              <strong id="modeLabel">Adding passing students</strong>
+              <small id="modeHint">Green · target 1</small>
+            </span>
+          </label>
+
+          <div class="preset-row">
+            <label for="presetSelect">Example data</label>
+            <select id="presetSelect">
+              <option value="separable">Clearly Separable</option>
+              <option value="edge">Boundary Edge Case</option>
+              <option value="xor">Linearly Inseparable (XOR-like)</option>
+            </select>
+            <button id="presetButton" class="button button--secondary" type="button">
+              Add Preset Data
+            </button>
+          </div>
+        </section>
+
+        <section class="control-card" aria-labelledby="training-heading">
+          <div class="card-heading card-heading--compact">
+            <div>
+              <p class="section-kicker">2 · Run the rule</p>
+              <h2 id="training-heading">Training controls</h2>
+            </div>
+          </div>
+
+          <div class="button-grid">
+            <button id="trainButton" class="button button--primary button--wide" type="button">
+              <span aria-hidden="true">▶</span> Train (Animated)
+            </button>
+            <button id="stepButton" class="button button--secondary" type="button">
+              Step 1 Iteration
+            </button>
+            <button id="resetButton" class="button button--ghost" type="button">Reset</button>
+          </div>
+
+          <div class="speed-control">
+            <div class="range-label">
+              <label for="speedSlider">Animation speed</label>
+              <output id="speedValue" for="speedSlider">Normal</output>
+            </div>
+            <input id="speedSlider" type="range" min="1" max="5" value="3" step="1">
+            <div class="range-ends" aria-hidden="true"><span>Slower</span><span>Faster</span></div>
+          </div>
+
+          <p id="errorMessage" class="error-message" role="alert" hidden></p>
+        </section>
+
+        <section class="telemetry-card" aria-labelledby="telemetry-heading">
+          <div class="telemetry-heading-row">
+            <div>
+              <p class="section-kicker section-kicker--light">Live mathematics</p>
+              <h2 id="telemetry-heading">Inside the neuron</h2>
+            </div>
+            <span id="stepCounter" class="mono-chip">Step 0</span>
+          </div>
+
+          <dl class="telemetry-grid">
+            <div>
+              <dt>Weights W</dt>
+              <dd id="weightsValue">[0.000, 0.000]</dd>
+            </div>
+            <div>
+              <dt>Bias b</dt>
+              <dd id="biasValue">0.000</dd>
+            </div>
+            <div>
+              <dt>Active point p</dt>
+              <dd id="pointValue">[—, —]</dd>
+            </div>
+            <div>
+              <dt>Net input n</dt>
+              <dd id="netValue">—</dd>
+            </div>
+            <div>
+              <dt>Error e = t − a</dt>
+              <dd id="errorValue">—</dd>
+            </div>
+            <div>
+              <dt>Output a</dt>
+              <dd id="outputValue">—</dd>
+            </div>
+          </dl>
+
+          <div class="accuracy-block">
+            <div class="accuracy-label">
+              <span>Training accuracy</span>
+              <strong id="accuracyValue">—</strong>
+            </div>
+            <div
+              id="accuracyTrack"
+              class="accuracy-track"
+              role="progressbar"
+              aria-label="Training accuracy"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="accuracyBar"></span>
+            </div>
+          </div>
+
+          <p id="boundaryEquation" class="boundary-equation">Boundary appears after the first correction.</p>
+        </section>
+
+        <section class="narration-card" aria-labelledby="narration-heading">
+          <div class="narration-card__topline">
+            <span id="narrationBadge" class="mini-badge">Waiting</span>
+            <span id="epochValue">Epoch 0</span>
+          </div>
+          <h2 id="narration-heading">What the model is thinking</h2>
+          <p id="narrationText" aria-live="polite">
+            Add both green and red students, or load an example, to begin.
+          </p>
+        </section>
+      </aside>
+    </main>
+
+    <section class="lesson-strip" aria-labelledby="lesson-title">
+      <div>
+        <p class="section-kicker">The rule in one glance</p>
+        <h2 id="lesson-title">Predict, compare, correct.</h2>
+      </div>
+      <div class="formula-flow" aria-label="Perceptron learning rule equations">
+        <div><span>1</span><code>n = Wp + b</code><small>Score the student</small></div>
+        <i aria-hidden="true">→</i>
+        <div><span>2</span><code>a = hardlim(n)</code><small>Choose Pass or Fail</small></div>
+        <i aria-hidden="true">→</i>
+        <div><span>3</span><code>e = t − a</code><small>Measure the mistake</small></div>
+        <i aria-hidden="true">→</i>
+        <div><span>4</span><code>W ← W + epᵀ</code><small>Move the line</small></div>
+      </div>
+    </section>
+
+    <footer>
+      Built as an educational visualization of the Perceptron Learning Rule. Attendance uses a 0–10 scale, where 10 means 100%.
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+  </body>
+</html>

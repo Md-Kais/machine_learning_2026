@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Detect common objects in a photo using a Python-powered YOLO CNN.">
+  <title>Sightline — Object Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Sightline home">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>SIGHTLINE</span>
+      </a>
+      <div class="model-pill" title="Pretrained on the COCO object dataset">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>YOLOv8n</span>
+        <span class="pill-divider"></span>
+        <span class="pill-muted">80 classes</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="input-panel" aria-labelledby="input-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 · SOURCE</p>
+            <h1 id="input-heading">Give the model a frame.</h1>
+          </div>
+          <button class="icon-button" id="resetButton" type="button" title="Clear image" aria-label="Clear selected image" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg>
+          </button>
+        </div>
+
+        <div class="source-tabs" role="tablist" aria-label="Image source">
+          <button class="source-tab active" id="uploadTab" role="tab" aria-selected="true" aria-controls="uploadPane" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5"/></svg>
+            Upload photo
+          </button>
+          <button class="source-tab" id="cameraTab" role="tab" aria-selected="false" aria-controls="cameraPane" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3"/></svg>
+            Use camera
+          </button>
+        </div>
+
+        <div class="source-stage">
+          <div class="upload-pane" id="uploadPane" role="tabpanel" aria-labelledby="uploadTab">
+            <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" hidden>
+            <button class="drop-zone" id="dropZone" type="button">
+              <span class="scan-icon" aria-hidden="true">
+                <span class="corner tl"></span><span class="corner tr"></span>
+                <span class="corner bl"></span><span class="corner br"></span>
+                <svg viewBox="0 0 24 24"><path d="M12 15V5m0 0L8.5 8.5M12 5l3.5 3.5M6 14v4h12v-4"/></svg>
+              </span>
+              <span class="drop-title">Drop an image here</span>
+              <span class="drop-copy">or click to browse · JPG, PNG, WEBP, BMP · 12 MB max</span>
+            </button>
+          </div>
+
+          <div class="camera-pane" id="cameraPane" role="tabpanel" aria-labelledby="cameraTab" hidden>
+            <div class="camera-frame">
+              <video id="cameraVideo" autoplay playsinline muted></video>
+              <div class="camera-guide" aria-hidden="true"><span></span></div>
+              <p class="camera-message" id="cameraMessage">Allow camera access to begin.</p>
+            </div>
+            <div class="camera-actions">
+              <button class="primary-button" id="captureButton" type="button" disabled>
+                <span class="shutter" aria-hidden="true"></span> Capture frame
+              </button>
+              <button class="text-button" id="stopCameraButton" type="button">Turn off camera</button>
+            </div>
+            <canvas id="cameraCanvas" hidden></canvas>
+          </div>
+
+          <div class="preview-pane" id="previewPane" hidden>
+            <div class="image-frame">
+              <img id="previewImage" alt="Selected photo preview">
+              <div class="image-meta"><span id="fileName">photo.jpg</span><span id="fileSize"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="confidence-control">
+            <label for="confidenceInput"><span><strong>Minimum confidence</strong><output id="confidenceValue">35%</output></span></label>
+            <input id="confidenceInput" type="range" min="10" max="90" value="35" step="5" aria-describedby="confidenceHelp">
+            <span class="range-labels" aria-hidden="true"><small>More detections</small><small>More certain</small></span>
+            <small id="confidenceHelp" class="control-help">Allowed: 10–90%. Start at 35%; raise it to hide weaker guesses.</small>
+            <span class="confidence-presets" aria-label="Quick confidence settings">
+              <button type="button" data-confidence="35">Balanced 35%</button>
+              <button type="button" data-confidence="60">Cautious 60%</button>
+            </span>
+          </div>
+          <button class="detect-button" id="detectButton" type="button" disabled>
+            <span>Run detection</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14mm-5-5 5 5-5 5"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="result-panel" aria-labelledby="result-heading">
+        <div class="section-heading result-heading-row">
+          <div>
+            <p class="eyebrow">02 · ANALYSIS</p>
+            <h2 id="result-heading">Detection field</h2>
+            <span class="result-badge" id="resultBadge" data-kind="idle">Waiting for a photo</span>
+          </div>
+          <button class="secondary-button" id="downloadButton" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>
+            Save result
+          </button>
+        </div>
+
+        <div class="result-stage" id="resultStage">
+          <div class="empty-result" id="emptyResult">
+            <div class="radar" aria-hidden="true"><i></i><i></i><span></span></div>
+            <p>Detections will appear here</p>
+            <span>Choose a clear photo with one or more everyday objects.</span>
+          </div>
+          <div class="loading-result" id="loadingResult" hidden>
+            <div class="scan-line" aria-hidden="true"></div>
+            <div class="loading-copy"><span class="loader"></span><p>Reading the frame…</p></div>
+          </div>
+          <img class="result-image" id="resultImage" alt="Photo annotated with detected objects" hidden>
+        </div>
+
+        <div class="stats" aria-label="Detection statistics">
+          <div><span>OBJECTS</span><strong id="objectCount">—</strong></div>
+          <div><span>INFERENCE</span><strong id="elapsedTime">—</strong></div>
+          <div><span>THRESHOLD</span><strong id="thresholdStat">35%</strong></div>
+        </div>
+
+        <div class="detection-list-wrap">
+          <div class="list-heading"><h3>Objects found</h3><span id="classCount">0 classes</span></div>
+          <div class="detection-list" id="detectionList">
+            <p class="list-empty">No analysis yet.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Local processing · Images are not stored</span>
+      <a href="https://medium.com/@fatimazahra.belharar/object-detection-using-cnn-an-introduction-to-the-yolo-algorithm-df0f7b173c6" target="_blank" rel="noreferrer">How YOLO works ↗</a>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

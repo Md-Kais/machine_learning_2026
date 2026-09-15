@@ -1,0 +1,8 @@
+My name is Md. Kais . Add name in the report.All of these problems wshould be divided into 2 parts now. 
+one part is : the 5 problems ,( KNN, deciison tree, SVM, K means Clustering, CNN) should be in the report.
+another part is: Assignment. The remaining two problem should be in Assignment. 
+so, the cover letter of this two must be changed. the report and assignment is submitted to : Prof. Dr. Mohammad Osiur Rahman
+University is : University of Chittagong. 
+Use university logo in the front page: university-of-chittagong-logo.png.
+For Assigment course code is CSE 815. and For Lab Report, course code is CSE 816.
+Redone the pdf. Make no mistakes. plan and set goals and then execute. also verify. Give me both pdf and latex code for further use.

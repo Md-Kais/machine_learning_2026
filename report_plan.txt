@@ -1,0 +1,144 @@
+I have to write a Report for Machine Learning Lab. My Id number is 20701003.Course code is CSE 816.
+This infromation is important becaue you have to write CSE 816 in the left side and the Id in the right side in the every page header. and footer is the page number, in the center of the footer.
+Write an complete report with proper referencing (IEEE style).
+Report Must have all problem mentioned in the folder.
+Folder tree:
+ User@Mark ~\machine_learning ^C
+ User@Mark ~\machine_learning tree
+ .
+├──  cnn_object_detector
+│   ├──  app.py
+│   ├──  detector.py
+│   ├── �� README.md
+│   ├──  REPORT.md
+│   ├──  requirements.txt
+│   ├──  static
+│   │   ├──  app.js
+│   │   └──  styles.css
+│   ├──  templates
+│   │   └──  index.html
+│   ├──  tests
+│   │   └──  test_app.py
+│   └──  yolov8n.pt
+├──  decisionTree
+│   ├──  data
+│   │   └──  cardiac_triage.csv
+│   ├──  decision_tree_model.py
+│   ├──  dist
+│   │   ├──  app.js
+│   │   ├──  index.html
+│   │   ├──  model.json
+│   │   ├──  styles.css
+│   │   └──  tree.js
+│   ├── �� README.md
+│   ├──  REPORT.md
+│   ├──  server.stderr.log
+│   ├──  server.stdout.log
+│   ├──  start_app.py
+│   ├──  tests
+│   │   ├──  test_browser_tree.js
+│   │   └──  test_decision_tree.py
+│   └──  train_model.py
+├──  HMM
+│   ├──  dist
+│   │   ├──  app.js
+│   │   ├──  hmm.js
+│   │   ├──  hmm.py
+│   │   ├──  index.html
+│   │   ├──  manifest.webmanifest
+│   │   ├──  styles.css
+│   │   └──  sw.js
+│   ├── �� README.md
+│   ├──  REPORT.md
+│   ├──  tests
+│   │   ├──  test_browser_hmm.js
+│   │   └──  test_hmm.py
+│   └──  vercel.json
+├──  kmeans
+│   ├──  dist
+│   │   ├──  app.js
+│   │   ├──  index.html
+│   │   ├──  manifest.webmanifest
+│   │   ├──  styles.css
+│   │   └──  sw.js
+│   ├──  package.json
+│   ├── �� README.md
+│   ├──  REPORT.md
+│   ├──  server.js
+│   └──  vercel.json
+├──  KNN
+│   ├──  data
+│   │   └──  bmi_data.csv
+│   ├──  dist
+│   │   ├──  app.js
+│   │   ├──  index.html
+│   │   ├──  knn.js
+│   │   ├──  manifest.webmanifest
+│   │   ├──  model.json
+│   │   ├──  styles.css
+│   │   └──  sw.js
+│   ├──  knn_model.py
+│   ├──  plan.txt
+│   ├── �� README.md
+│   ├──  REPORT.md
+│   ├──  start_app.py
+│   ├──  tests
+│   │   ├──  test_browser_model.js
+│   │   └──  test_knn.py
+│   ├──  train_model.py
+│   └──  vercel.json
+├──  perceptron
+│   ├──  'Neural Network Design Hagan-72-104.pdf'
+│   ├──  plan.txt
+│   ├──  student_perceptron_app
+│   │   ├──  app.py
+│   │   ├──  perceptron.py
+│   │   ├──  public
+│   │   │   └──  static
+│   │   │       ├──  script.js
+│   │   │       └──  style.css
+│   │   ├──  pyproject.toml
+│   │   ├──  report.md
+│   │   ├──  requirements.txt
+│   │   ├──  static
+│   │   │   ├──  script.js
+│   │   │   └──  style.css
+│   │   ├──  templates
+│   │   │   └──  index.html
+│   │   ├──  tests
+│   │   │   └──  test_app.py
+│   │   ├──  uv.lock
+│   │   └──  vercel.json
+│   └──  tmp
+└──  svm_diabetes_triage
+    ├──  data
+        │   └──  diabetes_triage.csv
+            ├──  dist
+                │   ├──  app.js
+                    │   ├──  index.html
+                        │   ├──  model.json
+                            │   ├──  styles.css
+                                │   └──  svm.js
+                                    ├── �� README.md
+                                        ├──  REPORT.md
+                                            ├──  server.stderr.log
+                                                ├──  server.stdout.log
+                                                    ├──  start_app.py
+                                                        ├──  svm_model.py
+                                                            ├──  tests
+                                                                │   ├──  test_browser_model.js
+                                                                    │   └──  test_svm.py
+                                                                        └──  train_model.py
+
+
+This is the folder treee. Each folder solves a ML algo with real life problem set.
+For each Machine Learning Algorithm, writing should be following:
+1. Title is the Algorithm name, subtopic is: Title of the problem. Title: Subtitle.
+2. First you have to describe the problem.
+3. Then, you have to describe the Algorithm. with detailed explanation, each of the function , process, data structure, input , output , function calling, parameter passing and each of the information clearly explained with perfect flow, so that an 10 year old naive non technical person can understand the algorithm just by reading it. It must add code to better understanding. add reference book or paper or website in the lines you take that from.
+4. 3rd section is for Dataset Description. In here, you have to describe how do you create the data, add reference. what is the meaning of each columns of the dataset with clear description so that a non techical person can easily understand. 
+5. 4th section is Training. Add how the website trains the data. add required command to train the dataset for that specific algorithm. How the training process is done. Add proper description so that a non technical person can easily understand and can train it with proper understanding and can tweak any parameter and how that change the overall training and answering with proper example.
+6. 5h section is Website. In here you have to describe the necessary information about the website. How it answers user's input.With proper description and flowchart and diagram so that it easily understandable by anyone.
+7. 6 is Comprehensive User Manual. In here, you have to spend most of the focus. What is the input, What is the output, How user uses it. What is the meaning of each of the output. So, any person such as a Techical , Non technical, 10 year old, any guy who can read and understand english can operate . add proper Images of the website for better understanding. 
+8. The add conclusion .
+Provide neccessary Latex code for error fixing. First check the folders and files, Report.md and Readme.md for understanding the context of each of the folders and code. Then Plan and set goals to fulfill the goal. Then execute. You just have to provide the Latex code with proper formatting, referencing and error checking, so that there is no such change is required other than changing the Name of the author, Provide PDF also for basic checking visually.
