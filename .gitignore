@@ -20,3 +20,5 @@ tmp/
 
 # Logs
 *.log
+report_plan.txt
+write_plan.txt

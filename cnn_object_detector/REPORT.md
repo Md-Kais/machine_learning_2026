@@ -55,7 +55,7 @@ The app accepts JPG, PNG, WEBP, or BMP files up to 12 MB. Large sides are shrunk
 to at most 1,920 pixels before inference so ordinary computers do not have to
 carry an unnecessarily huge picture.
 
-### Step-by-step magic
+### Step-by-step process
 
 1. The user uploads a photo or captures one camera frame.
 2. JavaScript checks the browser MIME type and 12 MB limit.
