@@ -191,3 +191,226 @@ page places the yellow dot on the map and shows which team middle is closer.
 
 Press **Replay K-means** to watch the stars move toward their team averages. The
 pretend result is an algorithm lesson, not a judgment about a real shopper.
+
+
+# How KMEANS work? 
+
+ ## Main answer
+
+  The actual K-means algorithm is implemented in dist/app.js:59, especially:
+
+  - normalizedDistance() at line 59
+  - runKMeans() at line 71
+  - Training invocation at line 129
+  - New-customer classification at line 197
+
+  This is a fully client-side JavaScript application. server.js only serves static files—it does not train or execute the model.
+
+  ## Project structure
+
+  kmeans/
+  ├── dist/
+  │   ├── index.html              Page structure, form, buttons, canvas
+  │   ├── styles.css              Layout, colors, responsive design
+  │   ├── app.js                  Dataset, K-means, classification, chart
+  │   ├── sw.js                   Offline caching
+  │   └── manifest.webmanifest   Installable PWA configuration
+  ├── server.js                   Local static-file web server
+  ├── package.json                npm start command; no dependencies
+  ├── vercel.json                 Vercel deployment configuration
+  ├── README.md                   Running and deployment instructions
+  └── REPORT.md                   Project and algorithm documentation
+
+  Despite the directory being named dist, there is no separate src directory or build process. These are the directly executed application files.
+
+  ### Runtime flow
+
+  npm start
+     ↓
+  server.js serves dist/
+     ↓
+  index.html loads app.js
+     ↓
+  runKMeans(customers) trains once
+     ↓
+  Final centroids are stored in model
+     ↓
+  User enters age and shopping score
+     ↓
+  classifyCustomer() finds the nearest centroid
+     ↓
+  drawChart() updates the visualization
+
+  ## How the K-means implementation works
+
+  ### 1. Training data
+
+  The fixed dataset is defined at dist/app.js:15.
+
+  const customers = [
+    [19, 18],
+    [22, 27],
+    // ...
+    [68, 89]
+  ].map(([age, spend]) => ({ age, spend }));
+
+  There are 27 pretend customers. Each customer has two features:
+
+  - age
+  - spend, meaning shopping score
+
+  There are no target labels because K-means is unsupervised.
+
+  ### 2. Distance calculation
+
+  dist/app.js:59 calculates normalized Euclidean distance:
+
+  const ageGap = (point.age - center.age) / 52;
+  const spendGap = (point.spend - center.spend) / 99;
+
+  return Math.sqrt(
+    ageGap * ageGap +
+    spendGap * spendGap
+  );
+
+  Mathematically:
+
+  [
+  d(p,c)=\sqrt{
+  \left(\frac{p_{age}-c_{age}}{52}\right)^2+
+  \left(\frac{p_{spend}-c_{spend}}{99}\right)^2
+  }
+  ]
+
+  The divisions normalize the feature ranges:
+
+  - Age range: 70 - 18 = 52
+  - Shopping-score range: 100 - 1 = 99
+
+  Without this normalization, shopping score would have more influence simply because its numeric range is larger.
+
+  ### 3. Starting centroids
+
+  Inside dist/app.js:71, K is effectively fixed at 2:
+
+  let centers = [
+    { age: 25, spend: 22 },
+    { age: 56, spend: 76 }
+  ];
+
+  These are manually selected initial guesses. The application does not use random initialization or K-means++.
+
+  ### 4. Assign points to their closest centroid
+
+  For every customer, the code measures the distance to both centers:
+
+  const nextAssignments = points.map(point => {
+    const distanceToFirst = normalizedDistance(point, centers[0]);
+    const distanceToSecond = normalizedDistance(point, centers[1]);
+
+    return distanceToFirst <= distanceToSecond ? 0 : 1;
+  });
+
+  The point receives cluster 0 or 1. An exact tie goes to cluster 0, making execution deterministic.
+
+  ### 5. Recalculate centroids
+
+  For each cluster, the code collects its customers and calculates their mean age and mean shopping score:
+
+  const team = points.filter(
+    (point, index) => nextAssignments[index] === clusterIndex
+  );
+
+  return {
+    age: team.reduce((sum, point) => sum + point.age, 0) / team.length,
+    spend: team.reduce((sum, point) => sum + point.spend, 0) / team.length
+  };
+
+  Therefore:
+
+  [
+  centroid_{age}=\frac{\sum ages}{number\ of\ customers}
+  ]
+
+  [
+  centroid_{spend}=\frac{\sum scores}{number\ of\ customers}
+  ]
+
+  If a cluster becomes empty, its previous center is retained.
+
+  ### 6. Stop when assignments no longer change
+
+  const nobodyMoved = nextAssignments.every(
+    (team, index) => team === assignments[index]
+  );
+
+  if (nobodyMoved) break;
+
+  There is also a maximum of 12 rounds to prevent an unlimited loop.
+
+  For this dataset, the verified execution is:
+
+   Round    Cluster sizes    Centroids                         Status
+  ━━━━━━━  ━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━
+   Start            0 / 0    (25, 22), (56, 76)                Initial guesses
+  ───────  ───────────────  ────────────────────────────────  ─────────────────
+   1              12 / 15    (31.67, 32.08), (49.27, 65.93)    Points assigned
+  ───────  ───────────────  ────────────────────────────────  ─────────────────
+   2              12 / 15    Same centroids                    Converged
+
+  The second round confirms that no assignments changed.
+
+  ### 7. Save the trained model
+
+  Training runs immediately when the browser loads dist/app.js:129:
+
+  const model = runKMeans(customers);
+
+  The returned object contains:
+
+  {
+    centers,      // final learned centroids
+    assignments,  // cluster of each training customer
+    history       // snapshots used by the replay animation
+  }
+
+  ## Budget and Premium labels
+
+  K-means itself only produces cluster numbers 0 and 1. It does not know the words “Budget” or “Premium.”
+
+  dist/app.js:132 assigns those names afterward:
+
+  const budgetIndex =
+    centers[0].spend <= centers[1].spend ? 0 : 1;
+
+  The centroid with the lower average shopping score becomes “Budget Shopper.” The other becomes “Premium Shopper.”
+
+  ## Classifying a user-entered customer
+
+  dist/app.js:197 does not rerun K-means and does not add the entered customer to the training data.
+
+  It:
+
+  1. Validates age and shopping score.
+  2. Calculates distance to both final centroids.
+  3. Chooses the nearest centroid.
+  4. Converts its cluster number to Budget or Premium.
+  5. Updates the result card and chart.
+
+  const distances = model.centers.map(
+    center => normalizedDistance(point, center)
+  );
+
+  winningCluster = distances[0] <= distances[1] ? 0 : 1;
+
+  So this part is nearest-centroid prediction using the already-trained clusters.
+
+  ## Supporting pieces
+
+  - dist/index.html:1 defines the sliders, number inputs, result card, replay button, and canvas.
+  - dist/app.js:306 draws points, centroids, decision regions, and the user’s customer.
+  - dist/app.js:248 plays the saved model.history; it does not retrain.
+  - server.js:1 is only a dependency-free static server with path-traversal protection.
+  - dist/sw.js:1 caches the app for offline use.
+
+  In short: this is a standard two-cluster Lloyd-style K-means loop with fixed initialization, normalized Euclidean distance, mean-based centroid updates, and assignment-based convergence.
