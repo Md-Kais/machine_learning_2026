@@ -1,0 +1,367 @@
+{
+  "name": "Simple BMI KNN",
+  "k": 5,
+  "feature": "bmi",
+  "training_examples": [
+    {
+      "height_cm": 150.0,
+      "weight_kg": 37.1,
+      "bmi": 16.489,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 41.4,
+      "bmi": 18.4,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 41.6,
+      "bmi": 18.489,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 48.4,
+      "bmi": 21.511,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 56.0,
+      "bmi": 24.889,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 56.3,
+      "bmi": 25.022,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 61.9,
+      "bmi": 27.511,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 67.3,
+      "bmi": 29.911,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 67.5,
+      "bmi": 30.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 74.3,
+      "bmi": 33.022,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 83.3,
+      "bmi": 37.022,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 150.0,
+      "weight_kg": 94.5,
+      "bmi": 42.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 42.2,
+      "bmi": 16.484,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 47.1,
+      "bmi": 18.398,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 47.4,
+      "bmi": 18.516,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 55.0,
+      "bmi": 21.484,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 63.7,
+      "bmi": 24.883,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 64.0,
+      "bmi": 25.0,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 70.4,
+      "bmi": 27.5,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 76.5,
+      "bmi": 29.883,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 76.8,
+      "bmi": 30.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 84.5,
+      "bmi": 33.008,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 94.7,
+      "bmi": 36.992,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 160.0,
+      "weight_kg": 107.5,
+      "bmi": 41.992,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 47.7,
+      "bmi": 16.505,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 53.2,
+      "bmi": 18.408,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 53.5,
+      "bmi": 18.512,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 62.1,
+      "bmi": 21.488,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 72.0,
+      "bmi": 24.913,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 72.3,
+      "bmi": 25.017,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 79.5,
+      "bmi": 27.509,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 86.4,
+      "bmi": 29.896,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 86.7,
+      "bmi": 30.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 95.4,
+      "bmi": 33.01,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 106.9,
+      "bmi": 36.99,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 170.0,
+      "weight_kg": 121.4,
+      "bmi": 42.007,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 53.5,
+      "bmi": 16.512,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 59.6,
+      "bmi": 18.395,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 59.9,
+      "bmi": 18.488,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 69.7,
+      "bmi": 21.512,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 80.7,
+      "bmi": 24.907,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 81.0,
+      "bmi": 25.0,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 89.1,
+      "bmi": 27.5,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 96.9,
+      "bmi": 29.907,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 97.2,
+      "bmi": 30.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 106.9,
+      "bmi": 32.994,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 119.9,
+      "bmi": 37.006,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 180.0,
+      "weight_kg": 136.1,
+      "bmi": 42.006,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 59.6,
+      "bmi": 16.51,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 66.4,
+      "bmi": 18.393,
+      "category": "Underweight"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 66.8,
+      "bmi": 18.504,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 77.6,
+      "bmi": 21.496,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 89.9,
+      "bmi": 24.903,
+      "category": "Normal"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 90.3,
+      "bmi": 25.014,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 99.3,
+      "bmi": 27.507,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 107.9,
+      "bmi": 29.889,
+      "category": "Overweight"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 108.3,
+      "bmi": 30.0,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 119.1,
+      "bmi": 32.992,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 133.6,
+      "bmi": 37.008,
+      "category": "Obese"
+    },
+    {
+      "height_cm": 190.0,
+      "weight_kg": 151.6,
+      "bmi": 41.994,
+      "category": "Obese"
+    }
+  ]
+}

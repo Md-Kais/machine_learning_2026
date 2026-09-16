@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Explore the Viterbi algorithm through Rabiner's hidden two-coin experiment."
+    />
+    <meta name="theme-color" content="#f4efe3" />
+    <title>Behind the Curtain · HMM Lab</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#experiment">Skip to the experiment</a>
+
+    <header class="topbar">
+      <div class="brand" aria-label="Behind the Curtain HMM Lab">
+        <span class="brand-mark" aria-hidden="true">
+          <span>H</span><span>T</span>
+        </span>
+        <span>
+          <strong>Behind the Curtain</strong>
+          <small>Hidden Markov Model lab</small>
+        </span>
+      </div>
+
+      <div class="engine-status" id="engine-status" role="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Preparing offline model…</span>
+      </div>
+    </header>
+
+    <main id="experiment">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Rabiner · Problem 2 · Decoding</p>
+          <h1 id="page-title">Which coin was hiding behind each toss?</h1>
+        </div>
+        <p class="intro-copy">
+          You hear the outcomes, but never see the coin. Change the evidence or the
+          dealer’s habits, then let Viterbi reveal the most likely hidden route.
+        </p>
+      </section>
+
+      <section class="play-guide" aria-labelledby="play-guide-title">
+        <div class="play-guide-heading">
+          <p class="guide-kicker">First time here? No maths needed.</p>
+          <h2 id="play-guide-title">Reveal the hidden coin in three moves</h2>
+          <p>
+            The dealer is behind a curtain. You hear each toss, but you cannot see
+            which coin made it. Your job is to ask the model for its best explanation.
+          </p>
+        </div>
+
+        <ol class="play-steps">
+          <li>
+            <span class="play-step-number">1</span>
+            <div>
+              <strong>Enter what you heard</strong>
+              <p>Use H for heads and T for tails.</p>
+            </div>
+          </li>
+          <li>
+            <span class="play-step-number">2</span>
+            <div>
+              <strong>Keep or change the setup</strong>
+              <p>The starting values already make a complete example.</p>
+            </div>
+          </li>
+          <li>
+            <span class="play-step-number">3</span>
+            <div>
+              <strong>Decode, then explore</strong>
+              <p>Select any toss to understand that step.</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="example-picker" aria-labelledby="example-picker-label">
+          <span id="example-picker-label">Or try a ready-made sequence</span>
+          <div class="preset-buttons">
+            <button type="button" data-observations="H H H H H T H T T">Original example</button>
+            <button type="button" data-observations="H H H H H H H">Heads streak</button>
+            <button type="button" data-observations="T T T T T T T">Tails streak</button>
+            <button type="button" data-observations="H T H T H T H T">Alternating</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <aside class="control-panel" aria-labelledby="controls-title">
+          <div class="panel-heading">
+            <div>
+              <p class="section-number">01</p>
+              <h2 id="controls-title">Set the experiment</h2>
+            </div>
+            <button class="text-button" id="reset-button" type="button">Reset</button>
+          </div>
+
+          <section class="control-section" aria-labelledby="observations-title">
+            <div class="control-label-row">
+              <h3 id="observations-title">Observed tosses</h3>
+              <span id="toss-count">9 tosses</span>
+            </div>
+            <p class="field-help">
+              This is what the dealer announces—not the coin you are trying to guess.
+              Type H or T; spaces and dashes are optional.
+            </p>
+            <label class="sr-only" for="sequence-input">Observed toss sequence</label>
+            <div class="sequence-field">
+              <input
+                id="sequence-input"
+                type="text"
+                value="H H H H H T H T T"
+                spellcheck="false"
+                autocomplete="off"
+                aria-describedby="sequence-help-inline sequence-error"
+              />
+              <button id="run-button" type="button">Decode</button>
+            </div>
+            <p class="input-hint" id="sequence-help-inline">Allowed: 1–60 tosses using only H and T; spaces, commas, and dashes are okay.</p>
+            <p class="field-error" id="sequence-error" role="alert"></p>
+          </section>
+
+          <section class="control-section" aria-labelledby="coins-title">
+            <h3 id="coins-title">How the coins behave</h3>
+            <p class="section-help">
+              A higher heads probability means that coin is more likely to produce H.
+              The remaining probability belongs to tails.
+            </p>
+
+            <div class="coin-control fair-control">
+              <div class="coin-control-title">
+                <span class="coin-icon" aria-hidden="true">F</span>
+                <span><strong>Fair coin</strong><small>Heads probability</small></span>
+                <output for="fair-heads" id="fair-heads-value">50%</output>
+              </div>
+              <input id="fair-heads" type="range" min="5" max="95" value="50" aria-describedby="fair-heads-help" />
+              <small class="slider-help" id="fair-heads-help">Allowed: 5–95%. A fair coin usually starts at 50%.</small>
+            </div>
+
+            <div class="coin-control loaded-control">
+              <div class="coin-control-title">
+                <span class="coin-icon" aria-hidden="true">B</span>
+                <span><strong>Biased coin</strong><small>Heads probability</small></span>
+                <output for="biased-heads" id="biased-heads-value">85%</output>
+              </div>
+              <input id="biased-heads" type="range" min="5" max="95" value="85" aria-describedby="biased-heads-help" />
+              <small class="slider-help" id="biased-heads-help">Allowed: 5–95%. Higher means heads appears more often.</small>
+            </div>
+          </section>
+
+          <details class="advanced-controls">
+            <summary>
+              <span>Dealer’s switching habits</span>
+              <span class="summary-hint">Advanced</span>
+            </summary>
+            <div class="advanced-body">
+              <label for="fair-stay">
+                <span>Keep the fair coin</span>
+                <output id="fair-stay-value" for="fair-stay">80%</output>
+              </label>
+              <input id="fair-stay" type="range" min="5" max="95" value="80" aria-describedby="fair-stay-help" />
+              <small class="slider-help" id="fair-stay-help">Allowed: 5–95%. Higher means fewer switches away from Fair.</small>
+
+              <label for="biased-stay">
+                <span>Keep the biased coin</span>
+                <output id="biased-stay-value" for="biased-stay">80%</output>
+              </label>
+              <input id="biased-stay" type="range" min="5" max="95" value="80" aria-describedby="biased-stay-help" />
+              <small class="slider-help" id="biased-stay-help">Allowed: 5–95%. Higher means fewer switches away from Biased.</small>
+              <p>
+                The dealer starts with an equal chance of holding either coin.
+                Switching is the remaining probability.
+              </p>
+            </div>
+          </details>
+        </aside>
+
+        <section class="results-panel" aria-labelledby="results-title">
+          <div class="results-topline">
+            <div>
+              <p class="section-number">02</p>
+              <h2 id="results-title">The hidden route</h2>
+              <span class="result-badge" id="result-badge" data-kind="ready">Ready to decode</span>
+            </div>
+            <div class="legend" aria-label="Coin legend">
+              <span><i class="fair-dot"></i>Fair</span>
+              <span><i class="biased-dot"></i>Biased</span>
+            </div>
+          </div>
+
+          <div class="route-summary">
+            <div>
+              <span class="summary-label">Most likely explanation</span>
+              <strong id="route-sentence">Biased coin, then fair coin</strong>
+            </div>
+            <div class="route-score">
+              <span class="summary-label">Path probability</span>
+              <strong id="path-probability">—</strong>
+              <small>Exact route + all tosses; not a confidence score</small>
+            </div>
+          </div>
+
+          <p class="prediction-note">
+            <strong>Plain meaning:</strong> this is the most likely complete coin route
+            under the settings on the left. It is a model prediction, not proof of what
+            the hidden dealer actually did.
+          </p>
+
+          <div class="timeline-wrap" aria-label="Decoded hidden-state timeline">
+            <div class="timeline-labels" aria-hidden="true">
+              <span>HEARD</span>
+              <span>HIDDEN</span>
+            </div>
+            <div class="timeline" id="timeline"></div>
+          </div>
+
+          <div class="inspector" id="step-inspector">
+            <div class="inspector-copy">
+              <p class="eyebrow" id="inspector-step">Step 1 · Heard H</p>
+              <h3 id="inspector-title">Why does Viterbi choose this coin?</h3>
+              <p id="inspector-explanation">
+                Select any toss above to inspect how the evidence and the previous
+                route combine at that moment.
+              </p>
+            </div>
+
+            <div class="probability-bars" aria-label="State confidence at selected step">
+              <div class="probability-row">
+                <div><span>Fair</span><strong id="fair-posterior-label">—</strong></div>
+                <div class="bar-track"><span class="fair-bar" id="fair-bar"></span></div>
+              </div>
+              <div class="probability-row">
+                <div><span>Biased</span><strong id="biased-posterior-label">—</strong></div>
+                <div class="bar-track"><span class="biased-bar" id="biased-bar"></span></div>
+              </div>
+              <p class="bar-note" id="posterior-note">
+                Posterior probability using the entire observation sequence
+              </p>
+            </div>
+          </div>
+
+          <p class="result-caution">
+            The two bars answer “which coin is likely at this one step?” using every
+            observed toss. The route above answers a different question: “which single
+            start-to-finish path is best?” They can occasionally disagree at one step.
+          </p>
+        </section>
+      </div>
+
+      <section class="learn-strip" aria-labelledby="learn-title">
+        <div class="learn-intro">
+          <p class="section-number">03</p>
+          <h2 id="learn-title">How Viterbi thinks</h2>
+          <p>One careful pass forward, then one clean trace backward.</p>
+        </div>
+        <ol class="steps">
+          <li>
+            <span>1</span>
+            <div><strong>Start</strong><p>Score each possible starting coin.</p></div>
+          </li>
+          <li>
+            <span>2</span>
+            <div><strong>Compare</strong><p>Keep only the best route into each state.</p></div>
+          </li>
+          <li>
+            <span>3</span>
+            <div><strong>Backtrack</strong><p>Follow the winning pointers to the start.</p></div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="meaning-guide" aria-labelledby="meaning-title">
+        <div class="meaning-heading">
+          <div>
+            <p class="section-number">04 · Plain-language guide</p>
+            <h2 id="meaning-title">What does everything on the screen mean?</h2>
+          </div>
+          <p>
+            The app is a safe place to experiment. Change one setting, decode again,
+            and notice how the hidden route responds. There is no score to win.
+          </p>
+        </div>
+
+        <div class="meaning-grid">
+          <article class="meaning-card input-card">
+            <p class="card-kicker">What you control</p>
+            <h3>Inputs: evidence and assumptions</h3>
+            <dl>
+              <div>
+                <dt>Observed tosses</dt>
+                <dd>The H and T results you heard. These are the visible evidence.</dd>
+              </div>
+              <div>
+                <dt>Heads probability</dt>
+                <dd>
+                  How often each coin is expected to land heads. Tails receives whatever
+                  probability remains. For example, 85% heads means 15% tails.
+                </dd>
+              </div>
+              <div>
+                <dt>Keep the coin</dt>
+                <dd>
+                  How likely the dealer is to reuse the same coin on the next toss. A
+                  high value encourages longer runs with fewer switches.
+                </dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="meaning-card output-card">
+            <p class="card-kicker">What the model returns</p>
+            <h3>Outputs: the model’s explanation</h3>
+            <dl>
+              <div>
+                <dt>Hidden route</dt>
+                <dd>
+                  Viterbi’s single best Fair/Biased path for the complete sequence.
+                </dd>
+              </div>
+              <div>
+                <dt>Path probability</dt>
+                <dd>
+                  The probability of that exact hidden route together with all the
+                  observed tosses. Small values are normal, especially for long sequences.
+                </dd>
+              </div>
+              <div>
+                <dt>Fair / Biased bars</dt>
+                <dd>
+                  The probability of each coin at the selected step after considering
+                  the whole sequence. The two bars always total 100%.
+                </dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+
+        <aside class="golden-rule" aria-label="Important interpretation rule">
+          <strong>The rule to remember</strong>
+          <p>
+            HMM results depend on the assumptions you enter. If you change how biased
+            the coins are or how often the dealer switches, the best route may change.
+            That sensitivity is part of the lesson—not a mistake in the app.
+          </p>
+        </aside>
+
+        <div class="things-to-try">
+          <strong>Things to notice while you play</strong>
+          <ul>
+            <li>A run of heads usually supports the biased coin.</li>
+            <li>Tails usually supports the fair coin under the starting values.</li>
+            <li>Higher “keep” values make the model resist frequent switching.</li>
+            <li>Similar coins make the tosses less informative.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Based on the hidden two-coin experiment in L. R. Rabiner’s HMM tutorial.</p>
+      <p>Algorithm: local JavaScript · Python teaching version included</p>
+    </footer>
+
+    <template id="timeline-step-template">
+      <button class="timeline-step" type="button">
+        <span class="time-index"></span>
+        <span class="observation"></span>
+        <span class="connector" aria-hidden="true"></span>
+        <span class="state-coin"></span>
+      </button>
+    </template>
+
+    <noscript>This experiment needs JavaScript so it can run the local model.</noscript>
+    <script src="./hmm.js" defer></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

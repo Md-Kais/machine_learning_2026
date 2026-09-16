@@ -1,0 +1,10 @@
+{
+  "name": "BMI Neighbor — Simple KNN Predictor",
+  "short_name": "BMI Neighbor",
+  "description": "An offline-friendly KNN lesson that predicts an adult BMI category.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f8f2",
+  "theme_color": "#f7f8f2"
+}

@@ -1,0 +1,4 @@
+Create a INteractive web ui for CNN to detect onject from a photo. 
+https://medium.com/@fatimazahra.belharar/object-detection-using-cnn-an-introduction-to-the-yolo-algorithm-df0f7b173c6
+user can use camera or photo to detect object.
+Use Python for CNN. Use simple web app complete this. make a documentation as a report.

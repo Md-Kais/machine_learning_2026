@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7ff">
+  <meta name="description" content="A playful, kid-friendly K-means demo that groups retail customers by age and shopping score.">
+  <title>Customer Team Finder — K-means for Kids</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#playground">Skip to the playground</a>
+
+  <header class="topbar">
+    <div class="brand-mark" aria-hidden="true">K</div>
+    <div>
+      <p class="eyebrow">K-means made easy</p>
+      <h1>Customer Team Finder</h1>
+    </div>
+    <div class="two-teams" aria-label="This activity makes two teams">
+      <span class="team-dot team-dot--red"></span>
+      <span class="team-dot team-dot--blue"></span>
+      <strong>2 teams</strong>
+    </div>
+  </header>
+
+  <main id="playground" class="page-shell">
+    <section class="intro" aria-labelledby="intro-title">
+      <div>
+        <p class="kicker">A tiny machine-learning playground</p>
+        <h2 id="intro-title">Which shopping team is this customer on?</h2>
+      </div>
+      <p>Give the computer an age and a shopping score. It finds the closest team middle—just like sorting marbles into the nearest bowls.</p>
+    </section>
+
+    <section class="workspace" aria-label="Customer clustering playground">
+      <aside class="control-card">
+        <div class="card-heading">
+          <span class="step-number">1</span>
+          <div>
+            <p class="mini-label">Make a customer</p>
+            <h3>Choose two numbers</h3>
+          </div>
+        </div>
+
+        <form id="customer-form" novalidate>
+          <div class="field-group">
+            <div class="field-topline">
+              <label for="age-range">Customer age</label>
+              <div class="number-box">
+                <input id="age-number" type="number" min="18" max="70" step="1" value="34" aria-label="Customer age as a number" aria-describedby="age-help age-error">
+                <span>years</span>
+              </div>
+            </div>
+            <input id="age-range" class="range range--age" type="range" min="18" max="70" value="34" aria-describedby="age-help">
+            <div class="range-ends"><span>18</span><span>70</span></div>
+            <p id="age-help" class="field-help">Use a whole-number teaching age from 18 to 70.</p>
+            <p id="age-error" class="field-error" role="alert"></p>
+          </div>
+
+          <div class="field-group">
+            <div class="field-topline">
+              <label for="spend-range">Shopping score</label>
+              <div class="number-box">
+                <input id="spend-number" type="number" min="1" max="100" step="1" value="56" aria-label="Shopping score as a number" aria-describedby="spend-help spend-error">
+                <span>/ 100</span>
+              </div>
+            </div>
+            <input id="spend-range" class="range range--spend" type="range" min="1" max="100" value="56" aria-describedby="spend-help">
+            <div class="range-ends"><span>1 · shops a little</span><span>100 · shops a lot</span></div>
+            <p id="spend-help" class="field-help">A higher score means they enjoy buying more things.</p>
+            <p id="spend-error" class="field-error" role="alert"></p>
+          </div>
+
+          <button class="primary-button" type="submit">
+            <span>Find the customer’s team</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <div class="try-row" aria-label="Example customers">
+          <span>Quick tries:</span>
+          <button type="button" class="preset" data-age="22" data-spend="19">Try budget sample</button>
+          <button type="button" class="preset" data-age="48" data-spend="86">Try premium sample</button>
+        </div>
+
+        <div id="result-card" class="result-card" aria-live="polite">
+          <div class="result-icon" aria-hidden="true">★</div>
+          <div>
+            <p class="mini-label">The computer says</p>
+            <h3 id="result-title">Ready to sort!</h3>
+            <p id="result-copy">Choose two numbers, then press the big button.</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="chart-card" aria-labelledby="chart-title">
+        <div class="chart-heading">
+          <div class="card-heading">
+            <span class="step-number step-number--dark">2</span>
+            <div>
+              <p class="mini-label">See the teams</p>
+              <h3 id="chart-title">The customer map</h3>
+            </div>
+          </div>
+          <button id="replay-button" class="secondary-button" type="button">Replay K-means</button>
+        </div>
+
+        <div class="legend" aria-label="Chart legend">
+          <span><i class="legend-dot legend-dot--red"></i>Budget shoppers</span>
+          <span><i class="legend-dot legend-dot--blue"></i>Premium shoppers</span>
+          <span><i class="legend-dot legend-dot--you"></i>Your customer</span>
+          <span><i class="legend-star">★</i>Team middle</span>
+        </div>
+
+        <div class="canvas-wrap">
+          <canvas id="cluster-chart" role="img" aria-label="A chart of customer age from 18 to 70 and shopping score from 1 to 100. Red and blue dots show two K-means customer groups. A yellow dot shows your customer."></canvas>
+        </div>
+
+        <div class="chart-footer">
+          <p id="round-status"><strong>K-means finished:</strong> the dots have found their teams.</p>
+          <button id="reset-button" class="text-button" type="button">Reset my customer</button>
+        </div>
+
+        <div class="centroid-row" aria-label="Team middle values">
+          <div class="centroid-pill centroid-pill--red">
+            <span class="mini-label">Red team middle</span>
+            <strong id="budget-center">Age — · Score —</strong>
+          </div>
+          <div class="centroid-pill centroid-pill--blue">
+            <span class="mini-label">Blue team middle</span>
+            <strong id="premium-center">Age — · Score —</strong>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="lesson-card" aria-labelledby="lesson-title">
+      <div class="lesson-copy">
+        <p class="kicker">The whole K-means recipe</p>
+        <h2 id="lesson-title">Remember: Pick, Put, Push!</h2>
+        <p>K is the number of teams. Here, <strong>K = 2</strong>. The computer repeats these three small jobs until nothing needs to move.</p>
+      </div>
+      <ol class="recipe-list">
+        <li>
+          <span class="recipe-icon">1</span>
+          <div><strong>Pick</strong><p>Pick 2 starting middles.</p></div>
+        </li>
+        <li>
+          <span class="recipe-icon">2</span>
+          <div><strong>Put</strong><p>Put every dot with its nearest middle.</p></div>
+        </li>
+        <li>
+          <span class="recipe-icon">3</span>
+          <div><strong>Push</strong><p>Push each middle to the team’s average.</p></div>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    This is a learning demo with pretend customer data. It shows K-means clustering, not a real decision about a person.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

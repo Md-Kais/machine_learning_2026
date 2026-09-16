@@ -1,0 +1,10 @@
+{
+  "name": "Behind the Curtain — HMM Lab",
+  "short_name": "HMM Lab",
+  "description": "An offline hidden two-coin Viterbi and forward-backward lesson.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4efe3",
+  "theme_color": "#f4efe3"
+}

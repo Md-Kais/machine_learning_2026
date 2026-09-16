@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A beginner-friendly BMI category predictor powered by a simple K-Nearest Neighbors model."
+    />
+    <meta name="theme-color" content="#f7f8f2" />
+    <title>BMI Neighbor — Simple KNN Predictor</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main-content" aria-label="BMI Neighbor home">
+        <span class="brand-mark" aria-hidden="true">K</span>
+        <span>BMI Neighbor</span>
+      </a>
+      <span class="adult-badge">Adult screening demo · ages 20+</span>
+    </header>
+
+    <main id="main-content" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">A tiny machine-learning project</p>
+        <h1 id="page-title">Find your BMI’s<br /><span>nearest neighbors.</span></h1>
+        <p class="intro-copy">
+          Enter height and weight. A simple KNN model compares your BMI with
+          nearby examples and lets the closest five vote on the result.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="BMI predictor">
+        <form class="input-card" id="bmi-form" novalidate>
+          <div class="card-heading">
+            <span class="step-number">01</span>
+            <div>
+              <p class="card-kicker">Your measurements</p>
+              <h2>Enter two numbers</h2>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="height">Height</label>
+            <div class="input-wrap">
+              <input
+                id="height"
+                name="height"
+                type="number"
+                inputmode="decimal"
+                min="100"
+                max="250"
+                step="0.1"
+                placeholder="170"
+                aria-describedby="height-help height-error"
+                required
+              />
+              <span class="unit">cm</span>
+            </div>
+            <small id="height-help">Use centimetres, from 100 to 250.</small>
+            <small class="error-message" id="height-error"></small>
+          </div>
+
+          <div class="field-group">
+            <label for="weight">Weight</label>
+            <div class="input-wrap">
+              <input
+                id="weight"
+                name="weight"
+                type="number"
+                inputmode="decimal"
+                min="25"
+                max="350"
+                step="0.1"
+                placeholder="65"
+                aria-describedby="weight-help weight-error"
+                required
+              />
+              <span class="unit">kg</span>
+            </div>
+            <small id="weight-help">Use kilograms, from 25 to 350.</small>
+            <small class="error-message" id="weight-error"></small>
+          </div>
+
+          <button class="primary-button" id="predict-button" type="submit" disabled>
+            <span>Check with KNN</span>
+            <span aria-hidden="true">↗</span>
+          </button>
+
+          <!-- Presets fill both fields and submit through the same validated path. -->
+          <div class="preset-row" aria-label="Quick sample measurements">
+            <button class="example-button" type="button" data-height="170" data-weight="65">
+              Try typical-range sample
+            </button>
+            <button class="example-button" type="button" data-height="170" data-weight="100">
+              Try high-range sample
+            </button>
+          </div>
+
+          <p class="model-status" id="model-status" role="status">
+            Loading the tiny model…
+          </p>
+        </form>
+
+        <section class="result-card" id="result-card" aria-live="polite" aria-atomic="true">
+          <div class="result-empty" id="result-empty">
+            <span class="step-number step-number-light">02</span>
+            <div class="empty-orbit" aria-hidden="true">
+              <span>?</span>
+            </div>
+            <p class="card-kicker card-kicker-light">Your result</p>
+            <h2>Ready when you are.</h2>
+            <p>Your category, BMI number, and nearest examples will appear here.</p>
+          </div>
+
+          <div class="result-content" id="result-content" hidden>
+            <div class="result-topline">
+              <p class="card-kicker card-kicker-light">Your KNN result</p>
+              <span class="vote-badge">5 neighbors voted</span>
+            </div>
+
+            <p class="result-label">Category</p>
+            <h2 class="category-name" id="category-name">Normal</h2>
+
+            <div class="bmi-reading">
+              <span class="bmi-number" id="bmi-number">22.5</span>
+              <span class="bmi-caption">BMI score</span>
+            </div>
+
+            <div class="bmi-scale" aria-label="BMI category scale">
+              <div class="scale-track">
+                <span class="segment underweight"></span>
+                <span class="segment normal"></span>
+                <span class="segment overweight"></span>
+                <span class="segment obese"></span>
+                <span class="scale-marker" id="scale-marker" aria-hidden="true"></span>
+              </div>
+              <div class="scale-labels" aria-hidden="true">
+                <span>Under</span>
+                <span>Normal</span>
+                <span>Over</span>
+                <span>Obese</span>
+              </div>
+            </div>
+
+            <p class="result-message" id="result-message"></p>
+
+            <a class="chart-jump" href="#neighbor-map">
+              See the five neighbors on the height × weight graph
+              <span aria-hidden="true">↓</span>
+            </a>
+
+            <button class="reset-button" id="reset-button" type="button">
+              Check another person
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <section class="neighbor-visual" id="neighbor-map" aria-labelledby="chart-heading">
+        <div class="visual-heading">
+          <div>
+            <p class="eyebrow">The dataset in real-life measurements</p>
+            <h2 id="chart-heading">Who are your five neighbors?</h2>
+            <p class="visual-copy">
+              Every small dot is one height-and-weight example from the CSV.
+              The five large, ringed points are the examples whose BMI is closest
+              to yours. Each one is numbered and labeled on the graph.
+            </p>
+          </div>
+          <p class="chart-summary" id="chart-summary" aria-live="polite">
+            Loading the example…
+          </p>
+        </div>
+
+        <div class="chart-legend" aria-label="Chart legend">
+          <span><i class="legend-dot legend-underweight"></i>Underweight</span>
+          <span><i class="legend-dot legend-normal"></i>Normal</span>
+          <span><i class="legend-dot legend-overweight"></i>Overweight</span>
+          <span><i class="legend-dot legend-obese"></i>Obese</span>
+          <span><i class="legend-neighbor">1</i>Nearest neighbor</span>
+          <span><i class="legend-you"></i>Your point</span>
+        </div>
+
+        <div class="plot-wrap" id="plot-wrap">
+          <svg
+            class="neighbor-chart"
+            id="neighbor-chart"
+            role="img"
+            aria-labelledby="neighbor-chart-title neighbor-chart-description"
+          >
+            <title id="neighbor-chart-title">Height and weight neighbor chart</title>
+            <desc id="neighbor-chart-description">
+              The chart will show the example person and five nearest BMI examples.
+            </desc>
+          </svg>
+        </div>
+
+        <p class="chart-note">
+          Read right for more height and up for more weight. Dashed lines connect
+          the person to the five examples selected by BMI distance. Labels show
+          each neighbor's height, weight, and BMI (height × weight on small screens).
+        </p>
+
+        <ol class="neighbor-details" id="neighbor-details" aria-live="polite"></ol>
+      </section>
+
+      <section class="lesson" aria-labelledby="lesson-title">
+        <div class="lesson-heading">
+          <p class="eyebrow">Under the hood</p>
+          <h2 id="lesson-title">KNN in three small steps</h2>
+        </div>
+        <ol class="lesson-steps">
+          <li>
+            <span>1</span>
+            <div>
+              <strong>Calculate</strong>
+              <p>Turn height and weight into one BMI number.</p>
+            </div>
+          </li>
+          <li>
+            <span>2</span>
+            <div>
+              <strong>Find neighbors</strong>
+              <p>Pick the five dataset examples with the closest BMI.</p>
+            </div>
+          </li>
+          <li>
+            <span>3</span>
+            <div>
+              <strong>Let them vote</strong>
+              <p>The category with the most nearby examples wins.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <details class="help-box">
+        <summary>How should I measure height and weight?</summary>
+        <p>
+          Stand without shoes for height and use a level scale for weight. This
+          demo uses adult BMI ranges. Children and teenagers need age- and
+          sex-specific growth charts, so this tool is not suitable for them.
+        </p>
+      </details>
+
+      <footer>
+        <p>
+          Learning project only. BMI is a screening measurement, not a medical diagnosis.
+        </p>
+      </footer>
+    </main>
+
+    <script src="knn.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
