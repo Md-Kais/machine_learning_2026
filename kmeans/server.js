@@ -4,7 +4,7 @@ const fs = require("node:fs/promises");
 
 // This server only exposes the finished browser files inside dist.
 const publicDirectory = path.resolve(__dirname, "dist");
-const requestedPort = Number.parseInt(process.env.PORT || "3000", 10);
+const requestedPort = Number.parseInt(process.env.PORT || "9123", 10);
 const port = Number.isInteger(requestedPort) && requestedPort > 0 && requestedPort < 65536
   ? requestedPort
   : 9123;
