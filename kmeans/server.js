@@ -7,7 +7,7 @@ const publicDirectory = path.resolve(__dirname, "dist");
 const requestedPort = Number.parseInt(process.env.PORT || "3000", 10);
 const port = Number.isInteger(requestedPort) && requestedPort > 0 && requestedPort < 65536
   ? requestedPort
-  : 3000;
+  : 9123;
 const host = process.env.HOST || "127.0.0.1";
 
 const contentTypes = {
