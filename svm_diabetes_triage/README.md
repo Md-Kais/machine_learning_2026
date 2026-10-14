@@ -1,221 +1,106 @@
-# SVM Triage Lab — a tiny linear SVM project
+# Linear SVM decision lab
 
-This separate project teaches a **Support Vector Machine (SVM)** using two
-features:
+This update follows **svm15.pdf**, Andrew W. Moore's Support Vector Machines lecture: binary linear classification, maximum margins, support vectors, the quadratic dual and soft-margin slack. The existing **40-row synthetic glucose/BMI problem** supplies numerical data; the lecture's sketches do not specify a table of coordinates.
 
-1. Fasting blood glucose in milligrams per decilitre (`mg/dL`)
-2. Body Mass Index (`BMI`)
+The full algorithm is in **svm_model.py**, separate from train_model.py and the webpage. It uses a **linear kernel** and sequential minimal optimization (SMO) to solve the dual problem with finite C. Python's standard library is sufficient.
 
-The Python model learns a straight separator between two groups of teaching
-examples. The space between the two margin lines becomes the third teaching
-result: **Pre-diabetic / Further Diagnostic Needed**. The browser draws the
-dataset, support examples, separator, margin, clinical reference lines, and the
-user's input on the same x/y graph.
-
-> **Medical safety:** This synthetic-data project explains SVM; it cannot
-> diagnose or exclude diabetes. A clinician should interpret laboratory
-> results. NIDDK notes that diagnosis usually requires a second abnormal test.
-> BMI is a risk factor, not a blood-glucose test.
-
-## Run it
-
-Open PowerShell in this folder:
+## Run
 
 ```powershell
-cd C:\Users\User\machine_learning\svm_diabetes_triage
-```
-
-Train the SVM and create the browser model:
-
-```powershell
+cd D:\machine_learning_2026\svm_diabetes_triage
 python train_model.py
-```
-
-Start the website:
-
-```powershell
 python start_app.py
 ```
 
-Open the exact address printed by the command. It normally starts at:
+Open the printed address (normally http://127.0.0.1:8001). Keep the terminal open; Ctrl+C stops it. The page fetches dist/model.json, so use the server instead of opening index.html directly.
+
+## The linear decision rule
 
 ```text
-http://127.0.0.1:8001
+zj = (xj - training_mean_j) / training_scale_j
+score = w1*z1 + w2*z2 + b
+score < 0  -> lower_reference, class -1
+score >= 0 -> higher_reference, class +1
 ```
 
-The server tries the next available port automatically if 8001 is already in
-use. Keep the terminal open while using the page. Press `Ctrl+C` to stop it.
+The PDF initially writes w dot x - b, then uses w dot x + b for its planes. This code consistently uses **+b**; the sign convention just reverses the stored bias.
 
-## The SVM idea in child-friendly words
+The boundary has score 0. Margin planes have scores -1 and +1; the margin width is 2/||w|| in standardized feature space. Inputs inside the margin are still classified by score sign. The score is not a probability, and the margin is not a third class or a diagnosis. Labels describe synthetic reference groups only.
 
-Imagine blue dots standing on one side of a playground and red squares on the
-other side. SVM tries to draw a straight road between them:
+Training minimizes **0.5 ||w||² + C sum(slack)** with y_i*(w dot z_i+b) >= 1-slack_i. Its dual has 0 <= alpha_i <= C and sum(alpha_i*y_i)=0. Actual support vectors have alpha_i > 1e-8; these are not an arbitrary count of nearest points.
 
-1. The **center stripe** is the decision line.
-2. The **road edges** are the two margin lines.
-3. The dots touching or closest to the road edges are **support vectors**. They
-   are important because they decide where the road goes.
-4. During training, a point on the wrong side pushes the road a tiny step.
-5. After many tiny steps, the model remembers two weights and one bias.
+## Change training parameters
 
-The learned score is:
-
-```text
-score = glucose_weight × scaled_glucose
-      + BMI_weight     × scaled_BMI
-      + bias
+```powershell
+python train_model.py --C 1 --tolerance 0.00001 --max-passes 30 --max-iterations 20000 --random-seed 7
 ```
 
-The result rule is:
+| Option | Default | What changing it does |
+| --- | ---: | --- |
+| --C | 10.0 | Penalty for margin violations. Larger values penalize violations more; smaller values favor wider margins and allow more violations. Must be finite and positive. |
+| --tolerance | 0.0001 | KKT optimality tolerance. Smaller values request a closer optimization fit and may need more iterations. |
+| --max-passes | 20 | Stop after this many complete scans with no alpha updates. |
+| --max-iterations | 10000 | Maximum number of full training scans; prevents an unbounded solve. |
+| --random-seed | 42 | Reproducible candidate ordering when selecting multiplier pairs. |
+| --dataset | data/diabetes_triage.csv | Input CSV with the same feature columns and labels. |
+| --output | dist/model.json | Output model; the page loads dist/model.json. |
 
-```text
-score <= -1      → Lower screening signal
--1 < score < 1   → Pre-diabetic / Further Diagnostic Needed
-score >= 1       → Higher screening signal
+After changing parameters, retrain and refresh the page. It displays the settings, convergence status, support count and margin width. Check **Converged: True** in training output. If the iteration cap stops the solver early, the exported model is approximate and the page reports that status. Restore defaults with **python train_model.py**.
+
+Change glucose or BMI in the form and select **Classify point** to update the input diamond and the score calculation without retraining. **Download graph (SVG)** saves the current classification plot.
+
+To change the training problem, edit data/diabetes_triage.csv or use --dataset. Columns are fasting_glucose_mg_dl, bmi, label. Measurements must be finite and positive. Labels must be lower_reference or higher_reference, with both classes present and at least four records. Feature means and scales are recalculated from this data.
+
+Python use:
+
+```python
+from svm_model import SimpleLinearSVM, load_dataset
+model = SimpleLinearSVM(C=10.0, tolerance=0.0001)
+model.fit(load_dataset("data/diabetes_triage.csv"))
+print(model.predict(112, 29))
 ```
 
-The score is **not a probability**. It only says where the point sits relative
-to the learned line and its two margin edges.
+## Read the graph
 
-## Why the dataset has no middle training rows
+- Axes are standardized glucose and BMI with equal geometry; this is the space where the SVM maximizes its margin.
+- Blue circles represent class -1; red squares represent class +1.
+- Rings identify points with nonzero learned dual coefficients, including slack support vectors if present.
+- The solid boundary has score 0. Dashed margin lines have scores -1 and +1.
+- The gold diamond is your input. Its dashed segment ends at the perpendicular projection onto the boundary.
+- The explanation shows scaling, weighted score, sign and signed distance score/||w||.
 
-The CSV deliberately contains only two outside reference groups:
+The default solve classifies all 40 training examples correctly and identifies three support vectors. This is training accuracy, not held-out validation.
 
-- lower examples have fasting glucose at or below 99 mg/dL;
-- higher examples have fasting glucose at or above 126 mg/dL.
+## Files
 
-The model learns between these groups. The unused space becomes the SVM margin,
-which this teaching app names the follow-up zone. This makes the meaning of a
-margin visible without hiding the idea inside a large ML library.
+| File | Purpose |
+| --- | --- |
+| svm_model.py | Scaling, linear dual SMO training, supports, binary prediction and export |
+| train_model.py | Training CLI and model generation |
+| data/diabetes_triage.csv | Existing synthetic two-class dataset |
+| dist/svm.js | Separate browser classifier and projection math |
+| dist/app.js | Form, score explanation, support table and SVG drawing |
+| dist/index.html / styles.css | Page structure and presentation |
+| dist/model.json | Generated weights, bias, scaling and dual coefficients |
+| start_app.py | Local server; --port changes its initial port |
 
-The dataset is **synthetic educational data**, not patient records and not a
-validated clinical model.
-
-## How to read the graph
-
-- The **x-axis** is fasting blood glucose in `mg/dL`.
-- The **y-axis** is BMI.
-- Blue circles are lower-reference training examples.
-- Red squares are higher-reference training examples.
-- Dark rings mark the six examples closest to their margin edges—the support
-  examples.
-- The solid dark line is the learned SVM separator.
-- The orange dashed lines are the SVM margin edges.
-- The orange band is the **Pre-diabetic / Further Diagnostic Needed** teaching
-  zone.
-- The green diamond is the current user input.
-- The thin horizontal dashed segment shows the input's side and distance from
-  the center separator.
-- Vertical dotted lines at 100 and 126 are clinical fasting-glucose references.
-  They are separate from the SVM prediction.
-
-The learned line tilts slightly because BMI is a risk clue in the teaching data,
-but glucose has much more influence. Real diagnosis does not come from this
-two-feature SVM.
-
-## File-by-file summary
-
-### `data/diabetes_triage.csv`
-
-This is the small synthetic training dataset. Each row has fasting glucose, BMI,
-and one of two outside labels. CSV looks like a table, so a beginner can open it
-and understand every example. The clinically important middle glucose rows are
-left out so the SVM margin can represent the follow-up zone.
-
-### `svm_model.py`
-
-This is the actual machine-learning code. It loads the CSV, scales the two
-features, trains a linear soft-margin SVM with repeated gradient steps, finds
-support examples, predicts one of three teaching zones, and exports the learned
-numbers. It uses only normal Python—no scikit-learn or NumPy—so every important
-step is visible.
-
-### `train_model.py`
-
-This is the short file you run to train the model. It loads all 40 examples,
-calls `fit()`, prints training-side accuracy and the two learned weights, and
-saves `dist/model.json`. Keeping these actions separate makes the program order
-easy to follow.
-
-### `start_app.py`
-
-This starts a local static-file server using Python's standard library. It uses
-port 8001 so it can run beside the original BMI KNN project on port 8000. If the
-port is busy, it tries another one and prints the exact address to open.
-
-### `dist/model.json`
-
-This generated file is the trained SVM that JavaScript can read. It contains the
-feature means and scales, two weights, bias, margin values, clinical reference
-numbers, all graph points, and six support-example markers. Do not edit it by
-hand; run `python train_model.py` instead.
-
-### `dist/index.html`
-
-This is the structure and plain-language text of the UI. It contains the two
-inputs, animated result, responsive graph, tiny SVM lesson, safety warning, and
-authoritative medical links. Labels and live regions help keyboard and
-screen-reader users.
-
-### `dist/styles.css`
-
-This creates the responsive clinical-notebook design. It styles the two-column
-workspace, large inputs, three result states, graph axes, region colors, point
-shapes, line types, and small animations. Color is always paired with shape or
-text, and reduced-motion settings are respected.
-
-### `dist/svm.js`
-
-This is the small browser version of the SVM maths. It standardizes glucose and
-BMI, calculates the decision score, chooses a zone, and calculates where a
-margin line crosses the graph. Keeping maths here makes it testable without the
-buttons or SVG drawing code.
-
-### `dist/app.js`
-
-This connects the form to `svm.js`. It validates input, updates the visible
-result, explains the clinical fasting-glucose reference, and redraws the SVG
-when the input or screen size changes. Browsers with WebMCP support also receive
-one structured `screen_diabetes_triage` action that updates the same visible UI.
-
-### `tests/test_svm.py`
-
-These Python tests check the dataset, training accuracy, all three zones, bad
-input, model export, and support-example count. They use Python's built-in
-`unittest` module.
-
-### `tests/test_browser_model.js`
-
-These Node.js tests check the exact SVM maths used by the webpage. They verify
-the three teaching zones, boundary calculations, exported points, support
-examples, graph elements, responsive CSS, and invalid-input behavior.
-
-### `.gitignore`
-
-This keeps automatic Python cache files and local server logs out of version
-control because they are not source code.
-
-## Run the tests
-
-Python tests:
+## Verify
 
 ```powershell
 python -m unittest discover -s tests -v
-```
-
-Browser-model tests:
-
-```powershell
 node tests/test_browser_model.js
 ```
 
-## Medical references used for the teaching labels
+Checks cover a known maximum-margin solution, dual feasibility, KKT residuals, binary predictions inside the margin, C's effect, support coefficients, invalid inputs, exports, Python/browser score parity and perpendicular projection geometry.
 
-- [CDC: Diabetes Testing](https://www.cdc.gov/diabetes/diabetes-testing/index.html)
-- [NIDDK: Diabetes Tests & Diagnosis](https://www.niddk.nih.gov/health-information/diabetes/overview/tests-diagnosis)
-- [NIDDK: Risk Factors for Type 2 Diabetes](https://www.niddk.nih.gov/health-information/diabetes/overview/risk-factors-type-2-diabetes)
+## Saved graphs
 
-For non-pregnant people, these sources list fasting plasma glucose of 99 mg/dL
-or below as normal, 100–125 mg/dL as prediabetes, and 126 mg/dL or above as a
-diabetes threshold. Testing conditions and confirmation matter; this page is a
-programming lesson, not a replacement for medical care.
+Open [the decision graph](graphs/linear_svm_decision.png) or its [SVG version](graphs/linear_svm_decision.svg) directly. These show the default model and input. Regenerate them after retraining:
+
+```powershell
+python -m pip install -r requirements-plot.txt
+python plot_model.py
+python plot_model.py --glucose 150 --bmi 33 --output graphs/another_decision.png
+```
+
+The optional plotting script reads dist/model.json and saves PNG and SVG versions. Use --model to plot an alternate export. Matplotlib is needed only for saved plots; the training scripts and browser SVG graphs require no additional Python packages.

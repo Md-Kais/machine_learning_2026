@@ -30,7 +30,7 @@ def make_server(first_port: int) -> tuple[ThreadingHTTPServer, int]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the SVM diabetes screening demo.")
+    parser = argparse.ArgumentParser(description="Run the linear SVM teaching demo.")
     parser.add_argument("--port", type=int, default=8001, help="First local port to try.")
     args = parser.parse_args()
 
@@ -38,7 +38,7 @@ def main() -> None:
         raise SystemExit("Model missing. Run: python train_model.py")
 
     server, port = make_server(args.port)
-    print("SVM Diabetes Triage is ready.")
+    print("Linear SVM Lab is ready.")
     print(f"Open this exact address: http://127.0.0.1:{port}")
     print("Keep this window open. Press Ctrl+C here to stop the server.")
     try:

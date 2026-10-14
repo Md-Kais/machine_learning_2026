@@ -1,330 +1,271 @@
 {
-  "model_type": "decision_tree_classifier",
-  "algorithm": "CART-style binary tree using Gini impurity",
-  "max_depth": 2,
-  "features": {
-    "systolic_bp_mm_hg": {
-      "title": "Systolic blood pressure",
-      "unit": "mmHg"
-    },
-    "max_heart_rate_bpm": {
-      "title": "Maximum heart rate",
-      "unit": "bpm"
-    }
+  "model_type": "id3",
+  "criterion": "entropy_information_gain",
+  "features": [
+    "Outlook",
+    "Temp",
+    "Humidity",
+    "Wind"
+  ],
+  "categories": {
+    "Outlook": [
+      "Sunny",
+      "Overcast",
+      "Rain"
+    ],
+    "Temp": [
+      "Hot",
+      "Mild",
+      "Cool"
+    ],
+    "Humidity": [
+      "High",
+      "Normal"
+    ],
+    "Wind": [
+      "Weak",
+      "Strong"
+    ]
   },
-  "labels": {
-    "low_risk_discharge": "Low Risk / Discharge",
-    "high_risk_icu": "High Risk / Admit to ICU"
+  "parameters": {
+    "max_depth": null,
+    "min_samples_split": 2,
+    "min_gain": 0.0
   },
   "tree": {
-    "id": "node-1",
+    "id": "n0",
     "depth": 0,
-    "samples": 48,
+    "sample_count": 14,
     "class_counts": {
-      "low_risk_discharge": 36,
-      "high_risk_icu": 12
+      "Yes": 9,
+      "No": 5
     },
-    "prediction": "low_risk_discharge",
-    "impurity": 0.375,
+    "prediction": "Yes",
+    "entropy": 0.9402859586706311,
     "is_leaf": false,
-    "feature": "systolic_bp_mm_hg",
-    "feature_title": "Systolic blood pressure",
-    "unit": "mmHg",
-    "threshold": 140.0,
-    "left": {
-      "id": "node-2",
-      "depth": 1,
-      "samples": 24,
-      "class_counts": {
-        "low_risk_discharge": 24,
-        "high_risk_icu": 0
-      },
-      "prediction": "low_risk_discharge",
-      "impurity": 0.0,
-      "is_leaf": true
+    "gains": {
+      "Outlook": 0.24674981977443933,
+      "Temp": 0.02922256565895487,
+      "Humidity": 0.15183550136234159,
+      "Wind": 0.04812703040826949
     },
-    "right": {
-      "id": "node-3",
-      "depth": 1,
-      "samples": 24,
-      "class_counts": {
-        "low_risk_discharge": 12,
-        "high_risk_icu": 12
-      },
-      "prediction": "low_risk_discharge",
-      "impurity": 0.5,
-      "is_leaf": false,
-      "feature": "max_heart_rate_bpm",
-      "feature_title": "Maximum heart rate",
-      "unit": "bpm",
-      "threshold": 115.0,
-      "left": {
-        "id": "node-4",
-        "depth": 2,
-        "samples": 12,
+    "children": {
+      "Sunny": {
+        "id": "n1",
+        "depth": 1,
+        "sample_count": 5,
         "class_counts": {
-          "low_risk_discharge": 12,
-          "high_risk_icu": 0
+          "Yes": 2,
+          "No": 3
         },
-        "prediction": "low_risk_discharge",
-        "impurity": 0.0,
-        "is_leaf": true
+        "prediction": "No",
+        "entropy": 0.9709505944546686,
+        "is_leaf": false,
+        "gains": {
+          "Temp": 0.5709505944546686,
+          "Humidity": 0.9709505944546686,
+          "Wind": 0.01997309402197489
+        },
+        "children": {
+          "High": {
+            "id": "n2",
+            "depth": 2,
+            "sample_count": 3,
+            "class_counts": {
+              "Yes": 0,
+              "No": 3
+            },
+            "prediction": "No",
+            "entropy": 0.0,
+            "is_leaf": true,
+            "gains": {},
+            "children": {}
+          },
+          "Normal": {
+            "id": "n3",
+            "depth": 2,
+            "sample_count": 2,
+            "class_counts": {
+              "Yes": 2,
+              "No": 0
+            },
+            "prediction": "Yes",
+            "entropy": 0.0,
+            "is_leaf": true,
+            "gains": {},
+            "children": {}
+          }
+        },
+        "feature": "Humidity",
+        "gain": 0.9709505944546686
       },
-      "right": {
-        "id": "node-5",
-        "depth": 2,
-        "samples": 12,
+      "Overcast": {
+        "id": "n4",
+        "depth": 1,
+        "sample_count": 4,
         "class_counts": {
-          "low_risk_discharge": 0,
-          "high_risk_icu": 12
+          "Yes": 4,
+          "No": 0
         },
-        "prediction": "high_risk_icu",
-        "impurity": 0.0,
-        "is_leaf": true
+        "prediction": "Yes",
+        "entropy": 0.0,
+        "is_leaf": true,
+        "gains": {},
+        "children": {}
+      },
+      "Rain": {
+        "id": "n5",
+        "depth": 1,
+        "sample_count": 5,
+        "class_counts": {
+          "Yes": 3,
+          "No": 2
+        },
+        "prediction": "Yes",
+        "entropy": 0.9709505944546686,
+        "is_leaf": false,
+        "gains": {
+          "Temp": 0.01997309402197489,
+          "Humidity": 0.01997309402197489,
+          "Wind": 0.9709505944546686
+        },
+        "children": {
+          "Weak": {
+            "id": "n6",
+            "depth": 2,
+            "sample_count": 3,
+            "class_counts": {
+              "Yes": 3,
+              "No": 0
+            },
+            "prediction": "Yes",
+            "entropy": 0.0,
+            "is_leaf": true,
+            "gains": {},
+            "children": {}
+          },
+          "Strong": {
+            "id": "n7",
+            "depth": 2,
+            "sample_count": 2,
+            "class_counts": {
+              "Yes": 0,
+              "No": 2
+            },
+            "prediction": "No",
+            "entropy": 0.0,
+            "is_leaf": true,
+            "gains": {},
+            "children": {}
+          }
+        },
+        "feature": "Wind",
+        "gain": 0.9709505944546686
       }
-    }
+    },
+    "feature": "Outlook",
+    "gain": 0.24674981977443933
   },
   "training_examples": [
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Sunny",
+      "Temp": "Hot",
+      "Humidity": "High",
+      "Wind": "Weak",
+      "Play": "No"
     },
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Sunny",
+      "Temp": "Hot",
+      "Humidity": "High",
+      "Wind": "Strong",
+      "Play": "No"
     },
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Overcast",
+      "Temp": "Hot",
+      "Humidity": "High",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Rain",
+      "Temp": "Mild",
+      "Humidity": "High",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Rain",
+      "Temp": "Cool",
+      "Humidity": "Normal",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 90.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Rain",
+      "Temp": "Cool",
+      "Humidity": "Normal",
+      "Wind": "Strong",
+      "Play": "No"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Overcast",
+      "Temp": "Cool",
+      "Humidity": "Normal",
+      "Wind": "Strong",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Sunny",
+      "Temp": "Mild",
+      "Humidity": "High",
+      "Wind": "Weak",
+      "Play": "No"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Sunny",
+      "Temp": "Cool",
+      "Humidity": "Normal",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Rain",
+      "Temp": "Mild",
+      "Humidity": "Normal",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Sunny",
+      "Temp": "Mild",
+      "Humidity": "Normal",
+      "Wind": "Strong",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 105.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Overcast",
+      "Temp": "Mild",
+      "Humidity": "High",
+      "Wind": "Strong",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
+      "Outlook": "Overcast",
+      "Temp": "Hot",
+      "Humidity": "Normal",
+      "Wind": "Weak",
+      "Play": "Yes"
     },
     {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 120.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 135.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 145.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 155.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 170.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 60.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 85.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 110.0,
-      "label": "low_risk_discharge"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 120.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 140.0,
-      "label": "high_risk_icu"
-    },
-    {
-      "systolic_bp_mm_hg": 180.0,
-      "max_heart_rate_bpm": 160.0,
-      "label": "high_risk_icu"
+      "Outlook": "Rain",
+      "Temp": "Mild",
+      "Humidity": "High",
+      "Wind": "Strong",
+      "Play": "No"
     }
   ],
-  "warning": "Synthetic programming lesson only. Never use two vital signs to discharge, admit, diagnose, or treat a real patient."
+  "training_accuracy": 1.0,
+  "reference": "15.+Decision+tree+_+ID3.pdf (pages 2-3, 19-26)"
 }

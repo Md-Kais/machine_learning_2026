@@ -1,57 +1,69 @@
-"""Tests for the pure-Python Decision Tree."""
-
+"""Validate the lecture dataset, ID3 calculations, paths, and stopping rules."""
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from decision_tree_model import ID3DecisionTree, entropy, information_gain, load_dataset
 
-from decision_tree_model import HIGH_LABEL, LOW_LABEL, SimpleDecisionTree, load_dataset
-
-
-PROJECT_DIR = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 
-class DecisionTreeTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.examples = load_dataset(PROJECT_DIR / "data" / "cardiac_triage.csv")
-        cls.tree = SimpleDecisionTree(max_depth=2).fit(cls.examples)
+class ID3Tests(unittest.TestCase):
+    def setUp(self):
+        self.rows = load_dataset(ROOT / "data/play_tennis.csv")
+        self.model = ID3DecisionTree().fit(self.rows)
 
-    def test_dataset_and_training(self) -> None:
-        self.assertEqual(len(self.examples), 48)
-        self.assertEqual(self.tree.training_accuracy(), 1.0)
+    def test_lecture_entropy_and_gains(self):
+        self.assertEqual(len(self.rows), 14)
+        self.assertAlmostEqual(entropy(row["Play"] for row in self.rows), 0.9402859587)
+        expected = {"Outlook": 0.2467498198, "Temp": 0.0292225657,
+                    "Humidity": 0.1518355014, "Wind": 0.0481270304}
+        for feature, gain in expected.items():
+            self.assertAlmostEqual(information_gain(self.rows, feature), gain)
 
-    def test_learned_axis_aligned_questions(self) -> None:
-        self.assertEqual(self.tree.root.feature, "systolic_bp_mm_hg")
-        self.assertEqual(self.tree.root.threshold, 140)
-        self.assertEqual(self.tree.root.right.feature, "max_heart_rate_bpm")
-        self.assertEqual(self.tree.root.right.threshold, 115)
+    def test_pdf_tree_and_question(self):
+        root = self.model.tree
+        self.assertEqual(root["feature"], "Outlook")
+        self.assertEqual(set(root["children"]), {"Sunny", "Overcast", "Rain"})
+        self.assertEqual(root["children"]["Sunny"]["feature"], "Humidity")
+        self.assertEqual(root["children"]["Rain"]["feature"], "Wind")
+        self.assertEqual(root["children"]["Overcast"]["prediction"], "Yes")
+        question = dict(Outlook="Sunny", Temp="Mild", Humidity="High", Wind="Strong")
+        result = self.model.predict(question)
+        self.assertEqual(result["label"], "No")
+        self.assertEqual([(s["feature"], s["value"]) for s in result["path"]], [("Outlook", "Sunny"), ("Humidity", "High")])
+        self.assertEqual(self.model.training_accuracy(), 1.0)
 
-    def test_three_paths(self) -> None:
-        left_leaf = self.tree.predict(130, 150)
-        lower_right_leaf = self.tree.predict(155, 100)
-        upper_right_leaf = self.tree.predict(155, 130)
+    def test_parameter_changes_alter_tree(self):
+        stump = ID3DecisionTree(max_depth=0).fit(self.rows)
+        self.assertTrue(stump.tree["is_leaf"])
+        self.assertEqual(stump.tree["prediction"], "Yes")
+        self.assertTrue(ID3DecisionTree(min_gain=1).fit(self.rows).tree["is_leaf"])
+        self.assertTrue(ID3DecisionTree(min_samples_split=15).fit(self.rows).tree["is_leaf"])
+        one_level = ID3DecisionTree(max_depth=1).fit(self.rows)
+        self.assertTrue(all(child["is_leaf"] for child in one_level.tree["children"].values()))
 
-        self.assertEqual(left_leaf["label"], LOW_LABEL)
-        self.assertEqual(lower_right_leaf["label"], LOW_LABEL)
-        self.assertEqual(upper_right_leaf["label"], HIGH_LABEL)
-        self.assertEqual(len(left_leaf["path"]), 1)
-        self.assertEqual(len(upper_right_leaf["path"]), 2)
+    def test_unseen_valid_branch_uses_node_majority(self):
+        limited = ID3DecisionTree().fit([row for row in self.rows if row["Outlook"] != "Overcast"])
+        result = limited.predict(dict(Outlook="Overcast", Temp="Hot", Humidity="High", Wind="Weak"))
+        self.assertTrue(result["fallback"])
+        self.assertEqual(result["label"], limited.tree["prediction"])
+        with self.assertRaises(ValueError):
+            self.model.predict(dict(Outlook="Snow", Temp="Mild", Humidity="High", Wind="Strong"))
 
-    def test_bad_measurements_are_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "greater than zero"):
-            self.tree.predict(0, 100)
+    def test_export(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "model.json"
+            self.model.export_json(p)
+            package = json.loads(p.read_text())
+        self.assertEqual(package["model_type"], "id3")
+        self.assertEqual(package["criterion"], "entropy_information_gain")
+        self.assertEqual(len(package["training_examples"]), 14)
 
-    def test_browser_export(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output_path = Path(temp_dir) / "model.json"
-            self.tree.export_json(output_path)
-            model = json.loads(output_path.read_text(encoding="utf-8"))
-
-        self.assertEqual(model["model_type"], "decision_tree_classifier")
-        self.assertEqual(model["tree"]["feature"], "systolic_bp_mm_hg")
-        self.assertEqual(len(model["training_examples"]), 48)
-        self.assertIn("Never use", model["warning"])
+    def test_invalid_parameters(self):
+        for params in [dict(max_depth=-1), dict(min_samples_split=1), dict(min_gain=float("nan"))]:
+            with self.assertRaises(ValueError):
+                ID3DecisionTree(**params)
 
 
 if __name__ == "__main__":

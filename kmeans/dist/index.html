@@ -3,166 +3,94 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7ff">
-  <meta name="description" content="A playful, kid-friendly K-means demo that groups retail customers by age and shopping score.">
-  <title>Customer Team Finder — K-means for Kids</title>
-  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#102f35">
+  <title>K-means | Learn the centers</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <script src="kmeans.js" defer></script>
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#playground">Skip to the playground</a>
-
-  <header class="topbar">
-    <div class="brand-mark" aria-hidden="true">K</div>
-    <div>
-      <p class="eyebrow">K-means made easy</p>
-      <h1>Customer Team Finder</h1>
-    </div>
-    <div class="two-teams" aria-label="This activity makes two teams">
-      <span class="team-dot team-dot--red"></span>
-      <span class="team-dot team-dot--blue"></span>
-      <strong>2 teams</strong>
-    </div>
+<main>
+  <header class="page-header">
+    <div><p class="eyebrow">Machine learning lab / Unsupervised learning</p><h1>Let the data find its centers.</h1><p class="intro">Load a CSV, choose how many clusters you want, and watch K-means learn. Every final center is calculated from the rows assigned to it.</p></div>
+    <span class="local-badge">Training runs in your browser</span>
   </header>
 
-  <main id="playground" class="page-shell">
-    <section class="intro" aria-labelledby="intro-title">
-      <div>
-        <p class="kicker">A tiny machine-learning playground</p>
-        <h2 id="intro-title">Which shopping team is this customer on?</h2>
-      </div>
-      <p>Give the computer an age and a shopping score. It finds the closest team middle—just like sorting marbles into the nearest bowls.</p>
-    </section>
-
-    <section class="workspace" aria-label="Customer clustering playground">
-      <aside class="control-card">
-        <div class="card-heading">
-          <span class="step-number">1</span>
-          <div>
-            <p class="mini-label">Make a customer</p>
-            <h3>Choose two numbers</h3>
-          </div>
-        </div>
-
-        <form id="customer-form" novalidate>
-          <div class="field-group">
-            <div class="field-topline">
-              <label for="age-range">Customer age</label>
-              <div class="number-box">
-                <input id="age-number" type="number" min="18" max="70" step="1" value="34" aria-label="Customer age as a number" aria-describedby="age-help age-error">
-                <span>years</span>
-              </div>
-            </div>
-            <input id="age-range" class="range range--age" type="range" min="18" max="70" value="34" aria-describedby="age-help">
-            <div class="range-ends"><span>18</span><span>70</span></div>
-            <p id="age-help" class="field-help">Use a whole-number teaching age from 18 to 70.</p>
-            <p id="age-error" class="field-error" role="alert"></p>
-          </div>
-
-          <div class="field-group">
-            <div class="field-topline">
-              <label for="spend-range">Shopping score</label>
-              <div class="number-box">
-                <input id="spend-number" type="number" min="1" max="100" step="1" value="56" aria-label="Shopping score as a number" aria-describedby="spend-help spend-error">
-                <span>/ 100</span>
-              </div>
-            </div>
-            <input id="spend-range" class="range range--spend" type="range" min="1" max="100" value="56" aria-describedby="spend-help">
-            <div class="range-ends"><span>1 · shops a little</span><span>100 · shops a lot</span></div>
-            <p id="spend-help" class="field-help">A higher score means they enjoy buying more things.</p>
-            <p id="spend-error" class="field-error" role="alert"></p>
-          </div>
-
-          <button class="primary-button" type="submit">
-            <span>Find the customer’s team</span>
-            <span aria-hidden="true">→</span>
-          </button>
+  <div class="workspace">
+    <aside>
+      <section class="card controls">
+        <h2>1. Choose data & train</h2>
+        <label for="dataset">Dataset</label>
+        <select id="dataset">
+          <option value="dataset1.csv">Customers · income & spending</option>
+          <option value="dataset2.csv">Study habits · hours & score</option>
+          <option value="dataset3.csv">Weather · temperature & humidity</option>
+        </select>
+        <p class="muted small" id="dataset-description"></p>
+        <p class="source-line"><a id="dataset-link" href="data/dataset1.csv" download>Download source CSV</a></p>
+        <label class="upload-label" for="upload">Or load your own CSV<input id="upload" type="file" accept=".csv,text/csv"></label>
+        <p id="data-summary" class="small"></p>
+        <form id="train-form">
+          <label for="k">Number of clusters (K)</label>
+          <input id="k" type="number" min="1" step="1" value="3" required>
+          <label class="check"><input id="standardize" type="checkbox" checked> Scale both features equally</label>
+          <details><summary>Training parameters</summary>
+            <label for="seed">Random seed</label><input id="seed" type="number" min="0" max="4294967295" step="1" value="42" required>
+            <label for="restarts">Starting attempts</label><input id="restarts" type="number" min="1" max="10" step="1" value="5" required>
+            <label for="max-iterations">Maximum iterations</label><input id="max-iterations" type="number" min="1" max="200" step="1" value="100" required>
+            <label for="tolerance">Center movement tolerance</label><input id="tolerance" type="number" min="0" step="any" value="0.0001" required>
+          </details>
+          <button id="train" type="submit" disabled>Learn cluster centers</button>
+          <button id="cancel" class="secondary" type="button" hidden>Cancel training</button>
         </form>
-
-        <div class="try-row" aria-label="Example customers">
-          <span>Quick tries:</span>
-          <button type="button" class="preset" data-age="22" data-spend="19">Try budget sample</button>
-          <button type="button" class="preset" data-age="48" data-spend="86">Try premium sample</button>
-        </div>
-
-        <div id="result-card" class="result-card" aria-live="polite">
-          <div class="result-icon" aria-hidden="true">★</div>
-          <div>
-            <p class="mini-label">The computer says</p>
-            <h3 id="result-title">Ready to sort!</h3>
-            <p id="result-copy">Choose two numbers, then press the big button.</p>
-          </div>
-        </div>
-      </aside>
-
-      <section class="chart-card" aria-labelledby="chart-title">
-        <div class="chart-heading">
-          <div class="card-heading">
-            <span class="step-number step-number--dark">2</span>
-            <div>
-              <p class="mini-label">See the teams</p>
-              <h3 id="chart-title">The customer map</h3>
-            </div>
-          </div>
-          <button id="replay-button" class="secondary-button" type="button">Replay K-means</button>
-        </div>
-
-        <div class="legend" aria-label="Chart legend">
-          <span><i class="legend-dot legend-dot--red"></i>Budget shoppers</span>
-          <span><i class="legend-dot legend-dot--blue"></i>Premium shoppers</span>
-          <span><i class="legend-dot legend-dot--you"></i>Your customer</span>
-          <span><i class="legend-star">★</i>Team middle</span>
-        </div>
-
-        <div class="canvas-wrap">
-          <canvas id="cluster-chart" role="img" aria-label="A chart of customer age from 18 to 70 and shopping score from 1 to 100. Red and blue dots show two K-means customer groups. A yellow dot shows your customer."></canvas>
-        </div>
-
-        <div class="chart-footer">
-          <p id="round-status"><strong>K-means finished:</strong> the dots have found their teams.</p>
-          <button id="reset-button" class="text-button" type="button">Reset my customer</button>
-        </div>
-
-        <div class="centroid-row" aria-label="Team middle values">
-          <div class="centroid-pill centroid-pill--red">
-            <span class="mini-label">Red team middle</span>
-            <strong id="budget-center">Age — · Score —</strong>
-          </div>
-          <div class="centroid-pill centroid-pill--blue">
-            <span class="mini-label">Blue team middle</span>
-            <strong id="premium-center">Age — · Score —</strong>
-          </div>
-        </div>
+        <p id="status" role="status" aria-live="polite">Loading CSV…</p>
+        <p id="error" class="error" role="alert"></p>
       </section>
-    </section>
+      <section class="card prediction">
+        <h2>2. Identify a new point</h2>
+        <form id="predict-form">
+          <label id="feature-x-label" for="query-x">Feature 1</label><input id="query-x" type="number" step="any" required>
+          <label id="feature-y-label" for="query-y">Feature 2</label><input id="query-y" type="number" step="any" required>
+          <button id="predict" type="submit" disabled>Find nearest learned center</button>
+        </form>
+        <div id="prediction-result" class="result" aria-live="polite">Train a model to classify a point.</div>
+        <p class="small muted">You can also select any dataset point in the graph. Cluster numbers are group identifiers; K-means learns no target labels.</p>
+      </section>
+    </aside>
 
-    <section class="lesson-card" aria-labelledby="lesson-title">
-      <div class="lesson-copy">
-        <p class="kicker">The whole K-means recipe</p>
-        <h2 id="lesson-title">Remember: Pick, Put, Push!</h2>
-        <p>K is the number of teams. Here, <strong>K = 2</strong>. The computer repeats these three small jobs until nothing needs to move.</p>
-      </div>
-      <ol class="recipe-list">
-        <li>
-          <span class="recipe-icon">1</span>
-          <div><strong>Pick</strong><p>Pick 2 starting middles.</p></div>
-        </li>
-        <li>
-          <span class="recipe-icon">2</span>
-          <div><strong>Put</strong><p>Put every dot with its nearest middle.</p></div>
-        </li>
-        <li>
-          <span class="recipe-icon">3</span>
-          <div><strong>Push</strong><p>Push each middle to the team’s average.</p></div>
-        </li>
-      </ol>
-    </section>
-  </main>
+    <div class="main-column">
+      <section class="card graph-card">
+        <div class="section-header"><div><p class="eyebrow">Live learning view</p><h2>Points, assignments & learned centers</h2></div><button id="download-svg" class="secondary" disabled>Save SVG</button></div>
+        <div class="stats"><div><span>Dataset rows</span><strong id="row-count">—</strong></div><div><span>Clusters</span><strong id="cluster-count">—</strong></div><div><span>Iterations</span><strong id="iteration-count">—</strong></div><div><span>Final inertia</span><strong id="inertia">—</strong></div></div>
+        <div class="graph-container"><svg id="cluster-graph" viewBox="0 0 720 620" role="img" aria-label="K-means learning graph"><text x="360" y="300" text-anchor="middle">Load data to begin.</text></svg></div>
+        <div class="graph-key"><span>● Dataset rows</span><span>✚ Learned centers</span><span>◆ Selected point</span><span>Dashed lines: distances to final centers</span></div>
+        <div class="replay"><button id="play" class="secondary" disabled>Replay learning</button><button id="previous" class="secondary" disabled aria-label="Previous training step">←</button><label for="step">Training step<input id="step" type="range" min="0" max="0" value="0" disabled></label><button id="next" class="secondary" disabled aria-label="Next training step">→</button><button id="final" class="secondary" disabled>Final result</button></div>
+        <p id="step-description" class="step-description" aria-live="polite"></p>
+        <p id="scaling-note" class="small muted"></p>
+      </section>
 
-  <footer>
-    This is a learning demo with pretend customer data. It shows K-means clustering, not a real decision about a person.
-  </footer>
+      <section class="card">
+        <div class="section-header"><h2>Why this point joins this cluster</h2><span id="selected-id" class="muted small">Select a point after training</span></div>
+        <p id="decision-rule" class="formula">Compare the distance to every learned center. The smallest distance wins.</p>
+        <div class="table-wrap"><table id="distances"><thead><tr><th>Cluster</th><th>Center, original units</th><th>Distance</th><th>Decision</th></tr></thead><tbody></tbody></table></div>
+        <p id="distance-math" class="formula small"></p>
+        <p id="mean-explanation" class="small"></p>
+      </section>
+    </div>
+  </div>
 
-  <script src="app.js"></script>
+  <section class="card full-section">
+    <div class="section-header"><div><p class="eyebrow">Calculated from this CSV</p><h2>Final learned centers</h2></div><button id="download-centers" class="secondary" disabled>Download centers CSV</button></div>
+    <div class="table-wrap"><table id="centers"><thead></thead><tbody></tbody></table></div>
+    <p class="small muted" id="fit-note"></p>
+  </section>
+  <div class="bottom-grid">
+    <section class="card"><h2>What happened during learning?</h2><ol class="lesson"><li><strong>Initialize from data.</strong> K-means++ selects K starting rows from the CSV.</li><li><strong>Assign rows.</strong> Every row joins the closest current center.</li><li><strong>Recalculate centers.</strong> Each center becomes the mean of its assigned rows.</li><li><strong>Repeat.</strong> Continue until assignments are stable and movement is within tolerance, or the iteration limit is reached.</li></ol><p class="small muted">Several starting attempts reduce sensitivity to initialization. The attempt with the smallest final inertia is selected; a global optimum is not guaranteed.</p><div class="table-wrap"><table id="runs"><thead><tr><th>Attempt</th><th>Seed</th><th>Inertia</th><th>Selected</th></tr></thead><tbody></tbody></table></div></section>
+    <section class="card"><div class="section-header"><h2>Dataset assignments</h2><button id="download-labels" class="secondary" disabled>Download results CSV</button></div><p class="small muted">Select a row to inspect its distances. All rows are included in the downloaded results.</p><div class="table-wrap data-table"><table id="assignments"><thead></thead><tbody></tbody></table></div></section>
+  </div>
+  <footer>Three synthetic CSV datasets · No stored centers or target labels · Algorithm: kmeans.js · Parameter instructions: README.md</footer>
+</main>
 </body>
 </html>

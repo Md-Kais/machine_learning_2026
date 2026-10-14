@@ -36,7 +36,7 @@ def main() -> None:
         raise SystemExit("Model missing. Run: python train_model.py")
 
     server, port = make_server(args.port)
-    print("Decision Tree ER Lab is ready.")
+    print("ID3 Play Tennis Lab is ready.")
     print(f"Open this exact address: http://127.0.0.1:{port}")
     print("Keep this window open. Press Ctrl+C here to stop the server.")
     try:

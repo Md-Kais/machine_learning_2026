@@ -15,6 +15,8 @@ const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".csv": "text/csv; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
@@ -74,7 +76,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Customer Team Finder is running at http://localhost:${port}`);
+  console.log(`K-means Dataset Lab is running at http://localhost:${port}`);
   console.log("Press Ctrl+C to stop it.");
 });
 

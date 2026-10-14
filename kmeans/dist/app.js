@@ -1,456 +1,328 @@
-/*
- * K-MEANS LEARNING ENGINE + LIGHTWEIGHT PAGE CONTROLLER
- *
- * Kid-sized picture: every customer is a marble on graph paper. Age chooses the
- * left/right spot and shopping score chooses the up/down spot. K=2 means there
- * are two bowls. Each marble joins the nearest bowl, then each bowl slides to
- * the balance point (average) of its marbles. The computer repeats this until
- * no marble wants to swap bowls.
- *
- * This Type-A variant trains and predicts directly in JavaScript. There is no
- * model.json because the small dataset and complete training recipe are here.
- */
-
-// Pretend retail customers: each [age, shopping score] pair becomes a named dot.
-const customers = [
-  [19, 18], [22, 27], [25, 12], [28, 38], [31, 24], [34, 34], [37, 16],
-  [41, 31], [44, 20], [48, 39], [52, 23], [56, 33], [61, 17], [67, 29],
-  [20, 75], [24, 88], [27, 67], [30, 93], [34, 72], [38, 84], [42, 64],
-  [46, 91], [50, 70], [54, 82], [58, 61], [63, 77], [68, 89]
-// Destructuring changes [19, 18] into { age: 19, spend: 18 } for readability.
-].map(([age, spend]) => ({ age, spend }));
-
-const colors = {
-  ink: "#14213d",
-  muted: "#6c7890",
-  grid: "#dce3f2",
-  red: "#e8474f",
-  blue: "#356ee8",
-  yellow: "#ffd34e",
-  white: "#ffffff"
+/* Interface and SVG rendering. Learning lives in kmeans.js; CSV parsing in data.js. */
+"use strict";
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const definitions = {
+  "dataset1.csv": { name: "Customers", description: "72 synthetic customers: annual income in thousands and a spending score. No customer groups are provided." },
+  "dataset2.csv": { name: "Study habits", description: "90 synthetic study records: weekly study hours and assessment score. There are no target class labels." },
+  "dataset3.csv": { name: "Weather readings", description: "84 synthetic observations: temperature in Celsius and relative humidity percentage." }
 };
+let dataset = null, model = null, worker = null, selection = null;
+let frameIndex = 0, replayTimer = null, loadVersion = 0;
+const format = (value, digits = 3) => Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
+const featureTitle = feature => feature.replaceAll("_", " ");
+const color = index => "hsl(" + ((index * 137.508 + 155) % 360).toFixed(1) + " 58% 40%)";
 
-const ageRange = document.querySelector("#age-range");
-const ageNumber = document.querySelector("#age-number");
-const spendRange = document.querySelector("#spend-range");
-const spendNumber = document.querySelector("#spend-number");
-const ageError = document.querySelector("#age-error");
-const spendError = document.querySelector("#spend-error");
-const form = document.querySelector("#customer-form");
-const resultCard = document.querySelector("#result-card");
-const resultTitle = document.querySelector("#result-title");
-const resultCopy = document.querySelector("#result-copy");
-const budgetCenterText = document.querySelector("#budget-center");
-const premiumCenterText = document.querySelector("#premium-center");
-const replayButton = document.querySelector("#replay-button");
-const resetButton = document.querySelector("#reset-button");
-const roundStatus = document.querySelector("#round-status");
-const canvas = document.querySelector("#cluster-chart");
-const context = canvas.getContext("2d");
-
-let shownCustomer = null;
-let winningCluster = null;
-let replayTimer = null;
-
-// DISTANCE: measure the straight ruler line between a dot and a team middle.
-// Age spans 52 steps (18→70), while score spans 99 (1→100). Dividing by each
-// span turns both into equal 0-to-1 map rulers, so the larger score ruler does
-// not unfairly shout louder than age.
-function normalizedDistance(point, center) {
-  // Horizontal gap on the equal-sized age ruler.
-  const ageGap = (point.age - center.age) / 52;
-  // Vertical gap on the equal-sized shopping ruler.
-  const spendGap = (point.spend - center.spend) / 99;
-  // Pythagoras is a diagonal ruler: square both side gaps, add them, then take
-  // the square root. For gaps 0.3 and 0.4, distance is sqrt(.09+.16)=0.5.
-  return Math.sqrt((ageGap * ageGap) + (spendGap * spendGap));
+function element(tag, attrs = {}, text) {
+  const node = document.createElementNS(NS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  if (text !== undefined) node.textContent = text;
+  return node;
 }
 
-// TRAINING: PUT each dot near a center, PUSH each center to its team's average,
-// then repeat until no dot changes team.
-function runKMeans(points) {
-  // PICK: begin with two sensible pretend bowl positions. These are only
-  // starting guesses; K-means is allowed to move them.
-  let centers = [
-    { age: 25, spend: 22 },
-    { age: 56, spend: 76 }
-  ];
-  // -1 means a dot has not joined either team yet.
-  let assignments = Array(points.length).fill(-1);
-  // Save frames so the Replay button can show the learning process later.
-  const history = [{ centers: centers.map(center => ({ ...center })), assignments: [...assignments] }];
-
-  // Twelve rounds are more than enough for this tiny fixed dataset and also
-  // guarantee the loop cannot run forever if something unusual happens.
-  for (let round = 0; round < 12; round += 1) {
-    // PUT: compare each dot with both centers and return team number 0 or 1.
-    const nextAssignments = points.map(point => {
-      const distanceToFirst = normalizedDistance(point, centers[0]);
-      const distanceToSecond = normalizedDistance(point, centers[1]);
-      // The smaller ruler length wins; an exact tie consistently chooses team 0.
-      return distanceToFirst <= distanceToSecond ? 0 : 1;
-    });
-
-    // PUSH: calculate a new balance point for each team.
-    const nextCenters = centers.map((oldCenter, clusterIndex) => {
-      // Collect only the marbles assigned to this particular bowl.
-      const team = points.filter((point, index) => nextAssignments[index] === clusterIndex);
-      // An empty team has no average, so safely leave its bowl where it was.
-      if (!team.length) return oldCenter;
-
-      return {
-        // Mean age = all team ages added together / number of team members.
-        age: team.reduce((sum, point) => sum + point.age, 0) / team.length,
-        // Mean score uses the same balance-point recipe.
-        spend: team.reduce((sum, point) => sum + point.spend, 0) / team.length
-      };
-    });
-
-    // Copy the round into history so later changes cannot rewrite old frames.
-    history.push({
-      centers: nextCenters.map(center => ({ ...center })),
-      assignments: [...nextAssignments]
-    });
-
-    // Convergence means every marble picked the same team as last round.
-    const nobodyMoved = nextAssignments.every((team, index) => team === assignments[index]);
-    // Make this round the current truth.
-    centers = nextCenters;
-    assignments = nextAssignments;
-    // Stable teams mean the next round would repeat exactly, so stop early.
-    if (nobodyMoved) break;
+function clearTable(id, headers) {
+  const table = $(id);
+  const head = table.tHead || table.createTHead();
+  const body = table.tBodies[0] || table.createTBody();
+  head.replaceChildren(); body.replaceChildren();
+  const row = head.insertRow();
+  for (const title of headers) {
+    const cell = document.createElement("th"); cell.textContent = title; row.append(cell);
   }
-
-  // Return learned centers, each dot's team, and animation frames.
-  return { centers, assignments, history };
+  return body;
 }
 
-// Training runs once when the script loads.
-const model = runKMeans(customers);
-let displayState = { centers: model.centers, assignments: model.assignments };
-
-function getTeamRoles(centers) {
-  const budgetIndex = centers[0].spend <= centers[1].spend ? 0 : 1;
-  return { budgetIndex, premiumIndex: budgetIndex === 0 ? 1 : 0 };
+function cell(row, text) { const td = row.insertCell(); td.textContent = text; return td; }
+function clusterCell(row, index) {
+  const td = row.insertCell(), swatch = document.createElement("span");
+  swatch.className = "swatch"; swatch.style.backgroundColor = color(index);
+  td.append(swatch, document.createTextNode("Cluster " + (index + 1)));
+  return td;
 }
 
-function updateCenterLabels() {
-  const roles = getTeamRoles(model.centers);
-  const budget = model.centers[roles.budgetIndex];
-  const premium = model.centers[roles.premiumIndex];
-  budgetCenterText.textContent = `Age ${Math.round(budget.age)} · Score ${Math.round(budget.spend)}`;
-  premiumCenterText.textContent = `Age ${Math.round(premium.age)} · Score ${Math.round(premium.spend)}`;
+function stopReplay() {
+  clearInterval(replayTimer); replayTimer = null; $("play").textContent = "Replay learning";
 }
 
-function clamp(value, min, max) {
-  // Convert text to a number, replace non-numbers with min, round to a whole
-  // value, and keep the answer between the two safe fence posts.
-  const safeNumber = Number.isFinite(Number(value)) ? Number(value) : min;
-  return Math.min(max, Math.max(min, Math.round(safeNumber)));
+function setBusy(busy) {
+  for (const id of ["dataset", "upload", "k", "seed", "restarts", "max-iterations", "tolerance", "standardize"]) $(id).disabled = busy;
+  $("train").disabled = busy || !dataset;
+  $("cancel").hidden = !busy;
+  $("train").textContent = busy ? "Learning from CSV…" : "Learn cluster centers";
 }
 
-// Show a friendly warning instead of silently accepting an impossible value.
-function validateNumberInput(numberInput, min, max, errorElement, label) {
-  const value = Number(numberInput.value);
-  let message = "";
-  if (numberInput.value.trim() === "") {
-    message = `Please enter ${label}.`;
-  } else if (!Number.isFinite(value) || value < min || value > max) {
-    message = `${label} must be from ${min} to ${max}.`;
+function invalidateModel() {
+  stopReplay(); if (worker) worker.terminate(); worker = null;
+  model = null; selection = null; frameIndex = 0;
+  for (const id of ["predict", "play", "previous", "next", "final", "step", "download-svg", "download-centers", "download-labels"]) $(id).disabled = true;
+  for (const id of ["cluster-count", "iteration-count", "inertia"]) $(id).textContent = "—";
+  for (const id of ["centers", "assignments", "runs", "distances"]) {
+    const table = $(id); if (table.tBodies[0]) table.tBodies[0].replaceChildren();
   }
-  numberInput.setAttribute("aria-invalid", String(Boolean(message)));
-  errorElement.textContent = message;
-  return message === "";
+  $("prediction-result").textContent = "Train a model to classify a point.";
+  for (const id of ["distance-math", "mean-explanation", "fit-note", "step-description", "scaling-note"]) $(id).textContent = "";
+  $("decision-rule").textContent = "Compare the distance to every learned center. The smallest distance wins.";
+  $("selected-id").textContent = "Select a point after training";
+  $("step").max = "0"; $("step").value = "0";
 }
 
-// Keep a safe range slider and its matching number box synchronized.
-function linkInputs(rangeInput, numberInput, min, max, errorElement, label) {
-  rangeInput.addEventListener("input", () => {
-    numberInput.value = rangeInput.value;
-    validateNumberInput(numberInput, min, max, errorElement, label);
-  });
-
-  numberInput.addEventListener("input", () => {
-    if (validateNumberInput(numberInput, min, max, errorElement, label)) {
-      rangeInput.value = clamp(numberInput.value, min, max);
-    }
-  });
-
-  numberInput.addEventListener("change", () => {
-    validateNumberInput(numberInput, min, max, errorElement, label);
-  });
+function acceptDataset(parsed, name, description) {
+  invalidateModel(); dataset = { ...parsed, name };
+  const unique = new Set(dataset.records.map(r => JSON.stringify(r.values))).size;
+  $("k").max = String(unique);
+  if (Number($("k").value) > unique) $("k").value = String(Math.min(3, unique));
+  $("dataset-description").textContent = description;
+  $("data-summary").textContent = dataset.records.length + " rows · 2 numeric features · " + unique + " distinct points";
+  $("row-count").textContent = String(dataset.records.length);
+  $("feature-x-label").textContent = featureTitle(dataset.features[0]);
+  $("feature-y-label").textContent = featureTitle(dataset.features[1]);
+  $("query-x").value = String(dataset.records[0].values[0]);
+  $("query-y").value = String(dataset.records[0].values[1]);
+  $("error").textContent = "";
+  $("status").textContent = "CSV loaded. Choose K and learn the centers.";
+  setBusy(false); drawGraph();
 }
 
-linkInputs(ageRange, ageNumber, 18, 70, ageError, "Age");
-linkInputs(spendRange, spendNumber, 1, 100, spendError, "Shopping score");
-
-function setInputs(age, spend) {
-  ageRange.value = age;
-  ageNumber.value = age;
-  spendRange.value = spend;
-  spendNumber.value = spend;
-  // Programmatic presets are known-safe, so clear any earlier typed warning.
-  validateNumberInput(ageNumber, 18, 70, ageError, "Age");
-  validateNumberInput(spendNumber, 1, 100, spendError, "Shopping score");
+async function loadBuiltIn() {
+  const version = ++loadVersion, file = $("dataset").value;
+  invalidateModel(); dataset = null; setBusy(true);
+  $("cancel").hidden = true; $("status").textContent = "Loading " + file + "…";
+  $("error").textContent = "";
+  $("dataset-link").hidden = false; $("dataset-link").href = "data/" + file;
+  $("upload").value = "";
+  try {
+    const response = await fetch("data/" + file, { cache: "no-cache" });
+    if (!response.ok) throw Error("Cannot load CSV. Start the app with npm start.");
+    const parsed = ClusterData.parseCSV(await response.text());
+    if (version !== loadVersion) return;
+    acceptDataset(parsed, definitions[file].name, definitions[file].description);
+  } catch (error) {
+    if (version !== loadVersion) return;
+    $("error").textContent = error.message + " Run npm start instead of opening the HTML file directly.";
+    $("status").textContent = "Dataset could not be loaded."; setBusy(false);
+  }
 }
 
-function classifyCustomer() {
-  // Guard the ML calculation until both typed values sit inside the teaching map.
-  const ageIsValid = validateNumberInput(ageNumber, 18, 70, ageError, "Age");
-  const spendIsValid = validateNumberInput(spendNumber, 1, 100, spendError, "Shopping score");
-  if (!ageIsValid || !spendIsValid) return;
-
-  // The new customer is one dot; both inputs are now known to be safe.
-  const point = {
-    age: clamp(ageNumber.value, 18, 70),
-    spend: clamp(spendNumber.value, 1, 100)
+function train() {
+  if (!dataset) return;
+  const options = {
+    k: Number($("k").value), seed: Number($("seed").value), nInit: Number($("restarts").value),
+    maxIterations: Number($("max-iterations").value), tolerance: Number($("tolerance").value),
+    standardize: $("standardize").checked
   };
-  setInputs(point.age, point.spend);
-
-  // Measure the new dot to both learned bowl centers.
-  const distances = model.centers.map(center => normalizedDistance(point, center));
-  // The closest center supplies the cluster number.
-  winningCluster = distances[0] <= distances[1] ? 0 : 1;
-  shownCustomer = point;
-
-  const roles = getTeamRoles(model.centers);
-  const isBudget = winningCluster === roles.budgetIndex;
-  const winnerName = isBudget ? "Budget Shopper" : "Premium Shopper";
-  const winnerColor = isBudget ? "red" : "blue";
-  const losingCluster = winningCluster === 0 ? 1 : 0;
-  const nearSteps = Math.round(distances[winningCluster] * 100);
-  const farSteps = Math.round(distances[losingCluster] * 100);
-
-  resultCard.classList.remove("is-budget", "is-premium");
-  resultCard.classList.add(isBudget ? "is-budget" : "is-premium");
-  resultTitle.textContent = `${winnerColor === "red" ? "Red" : "Blue"} team: ${winnerName}!`;
-  resultCopy.textContent = `Your dot is ${nearSteps} map-steps from this team’s middle, and ${farSteps} from the other one. Closer wins!`;
-  drawChart();
+  if (options.k > Number($("k").max)) { $("error").textContent = "K cannot exceed the number of distinct points: " + $("k").max; return; }
+  invalidateModel(); setBusy(true); $("error").textContent = "";
+  $("status").textContent = "Learning K=" + options.k + " from " + dataset.records.length + " CSV rows. No centers are supplied.";
+  try { worker = new Worker("train-worker.js"); }
+  catch (error) { setBusy(false); $("error").textContent = "Training worker unavailable. Run npm start and open its local URL."; return; }
+  worker.onmessage = event => {
+    worker.terminate(); worker = null; setBusy(false);
+    if (event.data.error) { $("error").textContent = event.data.error; $("status").textContent = "Training failed. Check your settings."; return; }
+    model = event.data.model; frameIndex = model.history.length - 1;
+    $("step").max = String(frameIndex); $("step").value = String(frameIndex);
+    $("cluster-count").textContent = String(model.options.k);
+    $("iteration-count").textContent = String(model.iterations);
+    $("inertia").textContent = format(model.inertia);
+    $("status").textContent = model.converged ? "Learned centers from the CSV. Assignments are stable." : "Iteration limit reached. Increase maximum iterations and retrain.";
+    for (const id of ["predict", "play", "previous", "next", "final", "step", "download-svg", "download-centers", "download-labels"]) $(id).disabled = false;
+    populateResults(); setFrame(frameIndex); inspectPoint(dataset.records[0].values, "Dataset row " + dataset.records[0].id);
+  };
+  worker.onerror = () => {
+    if (worker) worker.terminate(); worker = null; setBusy(false);
+    $("status").textContent = "Training could not run.";
+    $("error").textContent = "Training worker failed to load. Run npm start and refresh the page.";
+  };
+  worker.postMessage({ points: dataset.records.map(row => row.values), options });
 }
 
-form.addEventListener("submit", event => {
-  event.preventDefault();
-  classifyCustomer();
-});
-
-document.querySelectorAll(".preset").forEach(button => {
-  button.addEventListener("click", () => {
-    setInputs(button.dataset.age, button.dataset.spend);
-    classifyCustomer();
+function populateResults() {
+  const centerBody = clearTable("centers", ["Cluster", "Assigned rows", ...dataset.features.map(featureTitle), "Cluster inertia"]);
+  model.rawCenters.forEach((center, index) => {
+    const row = centerBody.insertRow(); clusterCell(row, index); cell(row, model.counts[index]);
+    center.forEach(value => cell(row, format(value, 5)));
+    const inertia = model.transformed.reduce((sum, point, i) => sum + (model.labels[i] === index ? KMeans.squaredDistance(point, model.centers[index]) : 0), 0);
+    cell(row, format(inertia));
   });
-});
-
-resetButton.addEventListener("click", () => {
-  setInputs(34, 56);
-  classifyCustomer();
-});
-
-function startReplay() {
-  window.clearInterval(replayTimer);
-  replayButton.disabled = true;
-  shownCustomer = null;
-  winningCluster = null;
-  resultCard.classList.remove("is-budget", "is-premium");
-  resultTitle.textContent = "Watch the middle stars move";
-  resultCopy.textContent = "Each dot picks the nearest star. Then each star moves to its team’s average.";
-
-  let step = 0;
-  const frames = model.history;
-
-  function showFrame() {
-    displayState = frames[step];
-    const isFirst = step === 0;
-    roundStatus.innerHTML = isFirst
-      ? "<strong>Starting:</strong> two middle stars are picked."
-      : `<strong>Round ${step}:</strong> dots join a team, then the stars move.`;
-    drawChart();
-    step += 1;
-
-    if (step >= frames.length) {
-      window.clearInterval(replayTimer);
-      window.setTimeout(() => {
-        displayState = { centers: model.centers, assignments: model.assignments };
-        replayButton.disabled = false;
-        roundStatus.innerHTML = `<strong>Done in ${frames.length - 1} rounds:</strong> no dot needs to change teams.`;
-        classifyCustomer();
-      }, 520);
-    }
-  }
-
-  showFrame();
-  replayTimer = window.setInterval(showFrame, 720);
+  $("fit-note").textContent = "Trained with K=" + model.options.k + "; " + (model.options.standardize ? "standardized" : "original") + " feature distances. Attempt " + model.bestRun + " of " + model.runs.length + " has the lowest inertia. " + (model.converged ? "Centers equal the means of their final assigned rows." : "This approximate fit reached its iteration limit; centers may change with more iterations.");
+  const runBody = clearTable("runs", ["Attempt", "Seed", "Inertia", "Selected"]);
+  model.runs.forEach(run => { const row = runBody.insertRow(); cell(row, run.run); cell(row, run.seed); cell(row, format(run.inertia, 6)); cell(row, run.run === model.bestRun ? "Lowest inertia ✓" : ""); });
+  const assignmentBody = clearTable("assignments", ["Row id", ...dataset.features.map(featureTitle), "Cluster"]);
+  dataset.records.forEach((record, index) => {
+    const row = assignmentBody.insertRow(), td = row.insertCell(), button = document.createElement("button");
+    button.type = "button"; button.className = "row-button"; button.textContent = record.id;
+    button.addEventListener("click", () => inspectPoint(record.values, "Dataset row " + record.id));
+    td.append(button); record.values.forEach(value => cell(row, format(value))); clusterCell(row, model.labels[index]);
+  });
 }
 
-replayButton.addEventListener("click", startReplay);
-
-function drawStar(ctx, x, y, radius, fill) {
-  ctx.save();
-  ctx.beginPath();
-  for (let point = 0; point < 10; point += 1) {
-    const angle = (-Math.PI / 2) + (point * Math.PI / 5);
-    const length = point % 2 === 0 ? radius : radius * 0.46;
-    const px = x + Math.cos(angle) * length;
-    const py = y + Math.sin(angle) * length;
-    if (point === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = colors.ink;
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawChart() {
-  const bounds = canvas.getBoundingClientRect();
-  const width = Math.max(320, bounds.width);
-  const height = Math.max(320, bounds.height);
-  const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = Math.floor(width * pixelRatio);
-  canvas.height = Math.floor(height * pixelRatio);
-  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  context.clearRect(0, 0, width, height);
-
-  const pad = { left: width < 460 ? 48 : 58, right: 22, top: 30, bottom: 52 };
-  const plotWidth = width - pad.left - pad.right;
-  const plotHeight = height - pad.top - pad.bottom;
-  const xForAge = age => pad.left + ((age - 18) / 52) * plotWidth;
-  const yForSpend = spend => pad.top + plotHeight - ((spend - 1) / 99) * plotHeight;
-
-  const roles = getTeamRoles(displayState.centers);
-
-  // Soft map squares show which center owns each part of the map.
-  for (let x = pad.left; x < pad.left + plotWidth; x += 14) {
-    for (let y = pad.top; y < pad.top + plotHeight; y += 14) {
-      const mapPoint = {
-        age: 18 + ((x - pad.left) / plotWidth) * 52,
-        spend: 100 - ((y - pad.top) / plotHeight) * 99
-      };
-      const nearest = normalizedDistance(mapPoint, displayState.centers[0]) <= normalizedDistance(mapPoint, displayState.centers[1]) ? 0 : 1;
-      context.fillStyle = nearest === roles.budgetIndex ? "rgba(232, 71, 79, 0.035)" : "rgba(53, 110, 232, 0.035)";
-      context.fillRect(x, y, 14, 14);
-    }
-  }
-
-  context.font = "700 12px Trebuchet MS, Segoe UI, sans-serif";
-  context.textAlign = "center";
-  context.textBaseline = "top";
-
-  [20, 30, 40, 50, 60, 70].forEach(age => {
-    const x = xForAge(age);
-    context.beginPath();
-    context.moveTo(x, pad.top);
-    context.lineTo(x, pad.top + plotHeight);
-    context.strokeStyle = colors.grid;
-    context.lineWidth = 1;
-    context.stroke();
-    context.fillStyle = colors.muted;
-    context.fillText(age, x, pad.top + plotHeight + 9);
-  });
-
-  [20, 40, 60, 80, 100].forEach(spend => {
-    const y = yForSpend(spend);
-    context.beginPath();
-    context.moveTo(pad.left, y);
-    context.lineTo(pad.left + plotWidth, y);
-    context.strokeStyle = colors.grid;
-    context.stroke();
-    context.textAlign = "right";
-    context.textBaseline = "middle";
-    context.fillStyle = colors.muted;
-    context.fillText(spend, pad.left - 10, y);
-  });
-
-  context.beginPath();
-  context.moveTo(pad.left, pad.top);
-  context.lineTo(pad.left, pad.top + plotHeight);
-  context.lineTo(pad.left + plotWidth, pad.top + plotHeight);
-  context.strokeStyle = colors.ink;
-  context.lineWidth = 2;
-  context.stroke();
-
-  context.fillStyle = colors.ink;
-  context.textAlign = "center";
-  context.textBaseline = "bottom";
-  context.font = "800 13px Trebuchet MS, Segoe UI, sans-serif";
-  context.fillText("CUSTOMER AGE →", pad.left + plotWidth / 2, height - 5);
-
-  context.save();
-  context.translate(14, pad.top + plotHeight / 2);
-  context.rotate(-Math.PI / 2);
-  context.fillText("SHOPPING SCORE →", 0, 0);
-  context.restore();
-
-  // A blank assignment means the replay has only picked its starting stars.
-  customers.forEach((point, index) => {
-    const team = displayState.assignments[index];
-    const fill = team === -1 ? "#aab4c7" : team === roles.budgetIndex ? colors.red : colors.blue;
-    const x = xForAge(point.age);
-    const y = yForSpend(point.spend);
-    context.beginPath();
-    context.arc(x, y, 5.5, 0, Math.PI * 2);
-    context.fillStyle = fill;
-    context.fill();
-    context.lineWidth = 1.5;
-    context.strokeStyle = colors.white;
-    context.stroke();
-  });
-
-  if (shownCustomer) {
-    const userX = xForAge(shownCustomer.age);
-    const userY = yForSpend(shownCustomer.spend);
-
-    displayState.centers.forEach((center, clusterIndex) => {
-      context.beginPath();
-      context.moveTo(userX, userY);
-      context.lineTo(xForAge(center.age), yForSpend(center.spend));
-      context.setLineDash(clusterIndex === winningCluster ? [] : [5, 6]);
-      context.strokeStyle = clusterIndex === winningCluster
-        ? (clusterIndex === roles.budgetIndex ? colors.red : colors.blue)
-        : "#a7b1c5";
-      context.lineWidth = clusterIndex === winningCluster ? 3 : 1.5;
-      context.stroke();
+function inspectPoint(values, source = "New input") {
+  if (!model) return;
+  try {
+    const result = KMeans.predict(values, model);
+    selection = { ...result, values: values.slice(), source };
+    $("query-x").value = String(values[0]); $("query-y").value = String(values[1]);
+    $("error").textContent = "";
+    $("selected-id").textContent = source;
+    $("prediction-result").replaceChildren(document.createTextNode(source));
+    const answer = document.createElement("strong"); answer.textContent = "Cluster " + (result.cluster + 1);
+    answer.style.color = color(result.cluster); $("prediction-result").append(answer);
+    $("prediction-result").append(document.createTextNode("Nearest-center distance: " + format(result.distance, 5)));
+    const body = clearTable("distances", ["Cluster", "Center, original units", "Distance", "Decision"]);
+    result.distances.forEach((distance, index) => {
+      const row = body.insertRow(); clusterCell(row, index);
+      cell(row, "(" + model.rawCenters[index].map(v => format(v, 4)).join(", ") + ")");
+      cell(row, format(distance, 6)); cell(row, index === result.cluster ? "Smallest distance ✓" : "");
+      if (index === result.cluster) row.className = "winner";
     });
-    context.setLineDash([]);
-  }
-
-  displayState.centers.forEach((center, clusterIndex) => {
-    const fill = clusterIndex === roles.budgetIndex ? colors.red : colors.blue;
-    drawStar(context, xForAge(center.age), yForSpend(center.spend), 12, fill);
-  });
-
-  if (shownCustomer) {
-    const x = xForAge(shownCustomer.age);
-    const y = yForSpend(shownCustomer.spend);
-    context.beginPath();
-    context.arc(x, y, 9, 0, Math.PI * 2);
-    context.fillStyle = colors.yellow;
-    context.fill();
-    context.lineWidth = 3;
-    context.strokeStyle = colors.ink;
-    context.stroke();
-
-    const labelY = Math.max(pad.top + 3, y - 29);
-    context.font = "900 11px Trebuchet MS, Segoe UI, sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillStyle = colors.ink;
-    context.fillText("YOU", x, labelY);
-  }
+    const z = result.transformed, center = model.centers[result.cluster];
+    $("decision-rule").textContent = "Cluster " + (result.cluster + 1) + " has the smallest Euclidean distance. Exact ties choose the lower cluster number.";
+    $("distance-math").textContent = "d = sqrt((" + format(z[0], 5) + " − " + format(center[0], 5) + ")² + (" + format(z[1], 5) + " − " + format(center[1], 5) + ")²) = " + format(result.distance, 6) + (model.options.standardize ? " standardized units" : " original feature units");
+    const members = dataset.records.filter((row, i) => model.labels[i] === result.cluster);
+    const sums = [0, 1].map(j => members.reduce((sum, row) => sum + row.values[j], 0));
+    $("mean-explanation").textContent = model.converged ? "How its center was learned: " + members.length + " assigned rows. " + dataset.features.map((feature, j) => featureTitle(feature) + " mean = " + format(sums[j], 4) + " / " + members.length + " = " + format(model.rawCenters[result.cluster][j], 5)).join("; ") + "." : "This run stopped at the iteration cap. Refit with more iterations before interpreting the centers as final cluster means.";
+    stopReplay(); setFrame(model.history.length - 1);
+  } catch (error) { $("error").textContent = error.message; }
 }
 
-const resizeObserver = new ResizeObserver(drawChart);
-resizeObserver.observe(canvas);
-
-updateCenterLabels();
-classifyCustomer();
-
-// Save the small local app after its first hosted visit so it can reopen when
-// the device is offline. The algorithm itself already makes no network calls.
-if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  navigator.serviceWorker.register("./sw.js").catch((error) => {
-    console.warn("Offline cache could not start", error);
-  });
+function setFrame(index) {
+  if (!model) return;
+  frameIndex = Math.max(0, Math.min(model.history.length - 1, index)); $("step").value = String(frameIndex);
+  const frame = model.history[frameIndex];
+  const phase = { initialize: "Initialization", assign: "Assign rows", update: "Update means", final: "Final result" }[frame.phase];
+  $("step-description").textContent = phase + (frame.iteration ? " · iteration " + frame.iteration : "") + ": " + frame.note + (frame.inertia === null ? "" : " Inertia: " + format(frame.inertia, 5) + ".") + (frame.shift === undefined ? "" : " Maximum center movement: " + format(frame.shift, 6) + ".") + (frame.repaired?.length ? " Empty clusters repaired: " + frame.repaired.length + "." : "") + (frame.phase === "update" ? " Points keep their last assignments until the next assignment step." : "");
+  $("previous").disabled = frameIndex === 0; $("next").disabled = frameIndex === model.history.length - 1;
+  $("scaling-note").textContent = model.options.standardize ? "Axes and distances use z = (value − mean) / standard deviation. Dataset scaling: " + dataset.features.map((f, j) => featureTitle(f) + " [mean " + format(model.scaler.means[j]) + ", scale " + format(model.scaler.scales[j]) + "]").join("; ") + ". Center tables show original units." : "Scaling is off. Axes and distances use the original feature units; features with larger numeric ranges can dominate.";
+  if (frame.phase !== "final") $("scaling-note").textContent += " Point prediction below uses the final learned model; this graph shows a training step.";
+  drawGraph();
 }
+
+function drawGraph() {
+  const svg = $("cluster-graph"); svg.replaceChildren();
+  svg.append(element("rect", { x: 0, y: 0, width: 720, height: 620, fill: "white" }));
+  if (!dataset) return;
+  const frame = model ? model.history[frameIndex] : { centers: [], labels: Array(dataset.records.length).fill(-1), phase: "loaded" };
+  const points = model ? model.transformed : dataset.records.map(row => row.values);
+  const showSelection = selection && frame.phase === "final";
+  const all = [...points, ...frame.centers, ...(showSelection ? [selection.transformed] : [])];
+  let lo = Math.min(...all.flat()), hi = Math.max(...all.flat());
+  const pad = Math.max((hi - lo) * 0.08, 0.5); lo -= pad; hi += pad;
+  const left = 90, top = 35, size = 500, span = hi - lo;
+  const sx = x => left + (x - lo) / span * size, sy = y => top + size - (y - lo) / span * size;
+  svg.append(element("title", {}, "K-means " + frame.phase + ": " + dataset.name));
+  svg.append(element("desc", {}, "Dataset rows are colored by assignment. Crosses show centers learned from data. Select a point to inspect distances."));
+  if (frame.centers.length) {
+    const resolution = 24, width = span / resolution;
+    for (let ix = 0; ix < resolution; ix++) for (let iy = 0; iy < resolution; iy++) {
+      const p = [lo + (ix + .5) * width, lo + (iy + .5) * width];
+      let winner = 0, distance = Infinity;
+      frame.centers.forEach((center, index) => { const d = KMeans.squaredDistance(p, center); if (d < distance) { winner = index; distance = d; } });
+      svg.append(element("rect", { x: sx(lo + ix * width), y: sy(lo + (iy + 1) * width), width: size / resolution + .4, height: size / resolution + .4, fill: color(winner), opacity: .075 }));
+    }
+  }
+  for (let i = 0; i <= 5; i++) {
+    const value = lo + span * i / 5;
+    svg.append(element("line", { x1: sx(value), y1: top, x2: sx(value), y2: top + size, stroke: "#dce6e0", "stroke-width": 1 }));
+    svg.append(element("line", { x1: left, y1: sy(value), x2: left + size, y2: sy(value), stroke: "#dce6e0", "stroke-width": 1 }));
+    svg.append(element("text", { x: sx(value), y: top + size + 24, "text-anchor": "middle", fill: "#61726c" }, format(value, 2)));
+    svg.append(element("text", { x: left - 12, y: sy(value) + 4, "text-anchor": "end", fill: "#61726c" }, format(value, 2)));
+  }
+  if (frame.phase === "update" && frameIndex > 0) {
+    const previous = model.history[frameIndex - 1];
+    frame.centers.forEach((center, index) => {
+      const before = previous.centers[index];
+      svg.append(element("line", { x1: sx(before[0]), y1: sy(before[1]), x2: sx(center[0]), y2: sy(center[1]), stroke: color(index), "stroke-width": 2, "stroke-dasharray": "3 3" }));
+      svg.append(element("circle", { cx: sx(before[0]), cy: sy(before[1]), r: 7, fill: "none", stroke: color(index), opacity: .5 }));
+    });
+  }
+  if (showSelection) model.centers.forEach((center, index) => {
+    svg.append(element("line", { x1: sx(selection.transformed[0]), y1: sy(selection.transformed[1]), x2: sx(center[0]), y2: sy(center[1]), stroke: index === selection.cluster ? color(index) : "#a6b8af", "stroke-width": index === selection.cluster ? 2.8 : 1, "stroke-dasharray": "5 4", opacity: index === selection.cluster ? 1 : .55 }));
+  });
+  points.forEach((point, index) => {
+    const cluster = frame.labels[index], record = dataset.records[index];
+    const dot = element("circle", { cx: sx(point[0]), cy: sy(point[1]), r: 4.5, fill: cluster < 0 ? "#93aaa0" : color(cluster), stroke: "white", "stroke-width": .8,
+      ...(model ? { role: "button", tabindex: 0, "aria-label": "Inspect row " + record.id + ", cluster " + (model.labels[index] + 1) } : {}) });
+    dot.append(element("title", {}, "Row " + record.id + ": " + record.values.join(", ") + (cluster < 0 ? " (unassigned)" : " · cluster " + (cluster + 1))));
+    if (model) {
+      dot.addEventListener("click", () => inspectPoint(record.values, "Dataset row " + record.id));
+      dot.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inspectPoint(record.values, "Dataset row " + record.id); } });
+    }
+    svg.append(dot);
+  });
+  frame.centers.forEach((center, index) => {
+    const x = sx(center[0]), y = sy(center[1]);
+    svg.append(element("circle", { cx: x, cy: y, r: 10, fill: "white", stroke: color(index), "stroke-width": 1.5 }));
+    const cross = element("path", { d: "M " + (x - 6) + " " + y + " H " + (x + 6) + " M " + x + " " + (y - 6) + " V " + (y + 6), stroke: color(index), "stroke-width": 3, fill: "none" });
+    cross.append(element("title", {}, "Cluster " + (index + 1) + " center: " + frame.rawCenters[index].map(v => format(v, 5)).join(", ")));
+    svg.append(cross);
+    if (frame.centers.length <= 12) svg.append(element("text", { x: Math.min(x + 14, left + size - 40), y: y - 12, fill: color(index), "font-weight": 700 }, "C" + (index + 1)));
+  });
+  if (showSelection) {
+    const x = sx(selection.transformed[0]), y = sy(selection.transformed[1]);
+    svg.append(element("path", { d: "M " + x + " " + (y - 9) + " L " + (x + 9) + " " + y + " L " + x + " " + (y + 9) + " L " + (x - 9) + " " + y + " Z", fill: "#f7c356", stroke: "#7b5b16", "stroke-width": 2 }));
+  }
+  svg.append(element("rect", { x: left, y: top, width: size, height: size, stroke: "#b8ccc0", fill: "none" }));
+  const prefix = model?.options.standardize ? "Standardized " : "";
+  svg.append(element("text", { x: left + size / 2, y: 592, "text-anchor": "middle", fill: "#183439" }, prefix + featureTitle(dataset.features[0])));
+  svg.append(element("text", { transform: "translate(22 285) rotate(-90)", "text-anchor": "middle", fill: "#183439" }, prefix + featureTitle(dataset.features[1])));
+  if (!model) $("step-description").textContent = "Untrained CSV points. Press Learn cluster centers to calculate their assignments and means.";
+}
+
+function download(filename, content, mime) {
+  const url = URL.createObjectURL(new Blob([content], { type: mime })), link = document.createElement("a");
+  link.href = url; link.download = filename; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function csv(rows) { return rows.map(row => row.map(ClusterData.escapeCSV).join(",")).join("\r\n") + "\r\n"; }
+
+$("dataset").addEventListener("change", loadBuiltIn);
+$("upload").addEventListener("change", async () => {
+  const file = $("upload").files[0]; if (!file) return;
+  const version = ++loadVersion;
+  try {
+    if (file.size > 1000000) throw Error("Use a CSV smaller than 1 MB.");
+    const parsed = ClusterData.parseCSV(await file.text()); if (version !== loadVersion) return;
+    acceptDataset(parsed, file.name, "Uploaded CSV. Centers will be learned from these rows, using the two numeric feature columns.");
+    $("dataset-link").hidden = true;
+  } catch (error) { if (version === loadVersion) $("error").textContent = error.message; }
+});
+$("train-form").addEventListener("submit", event => { event.preventDefault(); train(); });
+$("train-form").addEventListener("change", () => {
+  if (model) $("status").textContent = "Settings changed. Retrain to apply them; the current result still uses K=" + model.options.k + ".";
+});
+$("cancel").addEventListener("click", () => {
+  if (worker) worker.terminate(); worker = null; setBusy(false);
+  $("status").textContent = "Training cancelled. Change settings and train again."; drawGraph();
+});
+$("predict-form").addEventListener("submit", event => {
+  event.preventDefault();
+  if (!$("query-x").value.trim() || !$("query-y").value.trim()) { $("error").textContent = "Enter both numeric features."; return; }
+  inspectPoint([Number($("query-x").value), Number($("query-y").value)]);
+});
+$("step").addEventListener("input", () => { stopReplay(); setFrame(Number($("step").value)); });
+$("previous").addEventListener("click", () => { stopReplay(); setFrame(frameIndex - 1); });
+$("next").addEventListener("click", () => { stopReplay(); setFrame(frameIndex + 1); });
+$("final").addEventListener("click", () => { stopReplay(); setFrame(model.history.length - 1); });
+$("play").addEventListener("click", () => {
+  if (replayTimer) { stopReplay(); return; }
+  setFrame(0); $("play").textContent = "Pause replay";
+  replayTimer = setInterval(() => {
+    if (frameIndex >= model.history.length - 1) { stopReplay(); return; }
+    setFrame(frameIndex + 1);
+  }, 900);
+});
+$("download-labels").addEventListener("click", () => {
+  const rows = [["id", ...dataset.features, "cluster", "distance_to_center"], ...dataset.records.map((record, i) => [record.id, ...record.values, model.labels[i] + 1, KMeans.predict(record.values, model).distance])];
+  download("kmeans-assignments.csv", csv(rows), "text/csv");
+});
+$("download-centers").addEventListener("click", () => {
+  download("kmeans-centers.csv", csv([["cluster", "assigned_rows", ...dataset.features], ...model.rawCenters.map((center, i) => [i + 1, model.counts[i], ...center])]), "text/csv");
+});
+$("download-svg").addEventListener("click", () => {
+  const graph = $("cluster-graph").cloneNode(true); graph.setAttribute("xmlns", NS);
+  graph.prepend(element("style", {}, "text{font-family:Arial,sans-serif;font-size:12px}"));
+  download("kmeans-" + model.history[frameIndex].phase + ".svg", new XMLSerializer().serializeToString(graph), "image/svg+xml");
+});
+
+if ("serviceWorker" in navigator && ["http:", "https:"].includes(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+loadBuiltIn();

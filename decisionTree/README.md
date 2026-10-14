@@ -1,209 +1,105 @@
-# Decision Tree ER Lab — a tiny white-box ML project
+# ID3 Play Tennis
 
-This folder contains a Decision Tree written from scratch in normal Python. It
-uses a **synthetic emergency-room cardiac triage scenario** to teach two numeric
-features:
+This project follows **15.+Decision+tree+_+ID3.pdf**: the 14-row Tennis Playing table on page 2 and the question on page 3. Training uses categorical **ID3**, base-2 entropy and information gain. Every attribute value gets its own branch. The algorithm is in **decision_tree_model.py**, separate from the training script and webpage.
 
-1. Systolic blood pressure (`mmHg`) on the graph's x-axis
-2. Maximum heart rate (`bpm`) on the graph's y-axis
+## Run
 
-The requested target labels are:
-
-- **Low Risk / Discharge** — blue circles and blue regions
-- **High Risk / Admit to ICU** — red squares and red regions
-
-These are **toy labels**, not medical instructions. The dataset is made up, and
-the app must never be used to discharge, admit, diagnose, or treat a person.
-
-## Run it on localhost
-
-Open PowerShell in this folder:
+From PowerShell:
 
 ```powershell
-cd C:\Users\User\machine_learning\decisionTree
-```
-
-Train and export the Decision Tree:
-
-```powershell
+cd D:\machine_learning_2026\decisionTree
 python train_model.py
-```
-
-Start the website:
-
-```powershell
 python start_app.py
 ```
 
-Open the exact address printed in the terminal. It normally uses:
+Open the address printed by the server (normally http://127.0.0.1:8002). Keep the terminal open; Ctrl+C stops it. Python's standard library is sufficient. Run the server rather than opening index.html directly, because the browser fetches model.json.
 
-```text
-http://127.0.0.1:8002
+## The exact lecture problem
+
+Inputs: **Outlook=Sunny, Temp=Mild, Humidity=High, Wind=Strong**.
+
+Decision: **Outlook=Sunny -> Humidity=High -> Play=No**.
+
+The complete tree is Outlook -> Sunny/Humidity, Overcast/Yes, Rain/Wind. Sunny days use Humidity (High=No, Normal=Yes); rainy days use Wind (Weak=Yes, Strong=No).
+
+Root entropy is 0.940286 bits. Root information gains are:
+
+| Attribute | Gain (bits) |
+| --- | ---: |
+| Outlook | 0.246750 |
+| Humidity | 0.151836 |
+| Wind | 0.048127 |
+| Temp | 0.029223 |
+
+The implementation calculates weighted entropy directly from the records. Some arithmetic on the slides has typographical errors; the weighted sum and information gain formulas on pages 18-19 produce the values above.
+
+## Change training parameters
+
+```powershell
+python train_model.py --max-depth 1 --min-samples-split 3 --min-gain 0.05
 ```
 
-Port `8002` lets this page run beside the KNN app on `8000` and the SVM app on
-`8001`. If `8002` is busy, the script tries the next available port. Keep the
-terminal open and press `Ctrl+C` when you want to stop the server.
+| Option | Default | What changing it does |
+| --- | --- | --- |
+| --max-depth | unlimited | Root depth is 0. Set 0 for one majority leaf, 1 for root-only splits. Limiting depth can change predictions. |
+| --min-samples-split | 2 | A node with fewer records stops and uses its majority label. Must be an integer >= 2. |
+| --min-gain | 0.0 | Minimum information gain, in bits, required to split. Higher values stop low-gain splits. |
+| --dataset | data/play_tennis.csv | Read a different CSV with the same column names and categorical values. |
+| --output | dist/model.json | Destination for the trained model. The page reads dist/model.json. |
 
-## Decision Trees in words a child can understand
+After retraining, refresh the page. Its graph and displayed parameters come from the newly exported model. To restore the full lecture tree, run **python train_model.py** without options.
 
-Imagine a guessing game. You ask one yes-or-no question, then choose the next
-branch from the answer:
+Change today's weather through the four dropdowns; this changes the prediction without retraining. The gold path updates automatically. The **Restore PDF question** button resets the original question. **Download graph (SVG)** saves the current tree with its highlighted path.
 
-```text
-Is systolic BP <= 140?
-├─ Yes → blue toy label
-└─ No  → Is maximum heart rate <= 115?
-         ├─ Yes → blue toy label
-         └─ No  → red toy label
+CSV columns: Outlook, Temp, Humidity, Wind, Play. Accepted values:
+
+- Outlook: Sunny, Overcast, Rain
+- Temp: Hot, Mild, Cool
+- Humidity: High, Normal
+- Wind: Weak, Strong
+- Play: Yes, No
+
+Edit data/play_tennis.csv to change training examples, then retrain. A valid category absent from a trained branch uses that node's majority and is explicitly shown as a fallback. Tied majorities choose No; tied gains choose the original feature order. Pure nodes, exhausted attributes, and configured stopping limits end recursion. The older cardiac_triage.csv is retained as a legacy asset and is unused by this ID3 example.
+
+Python use:
+
+```python
+from decision_tree_model import ID3DecisionTree, load_dataset
+model = ID3DecisionTree(max_depth=None, min_samples_split=2, min_gain=0.0)
+model.fit(load_dataset("data/play_tennis.csv"))
+print(model.predict({"Outlook": "Sunny", "Temp": "Mild", "Humidity": "High", "Wind": "Strong"}))
 ```
 
-Each final answer box is called a **leaf**. The entire model is only nested
-`if`, `else`, and `return` instructions, so a person can inspect every decision.
+## Files
 
-## How training works
+| File | Purpose |
+| --- | --- |
+| decision_tree_model.py | Entropy, gain, categorical training, prediction, export |
+| train_model.py | CLI parameters, data loading and model generation |
+| data/play_tennis.csv | The lecture's 14 original records |
+| dist/tree.js | Separate browser inference algorithm |
+| dist/app.js | Form, explanation and highlighted SVG tree |
+| dist/index.html / styles.css | Page structure and presentation |
+| dist/model.json | Generated trained model; regenerate rather than editing |
+| start_app.py | Local static server; --port changes the initial port |
 
-The Python program does not begin with `140` or `115`. It learns them:
-
-1. Try cuts halfway between every neighboring number.
-2. Put values less than or equal to the cut on the left.
-3. Put larger values on the right.
-4. Measure how mixed the two new groups are with **Gini impurity**.
-5. Keep the cut producing the purest groups.
-6. Repeat inside each child group until depth two or a pure leaf is reached.
-
-Gini impurity is a mix meter:
-
-```text
-gini = 1 - (blue_fraction² + red_fraction²)
-```
-
-`0` means the box contains only one label. A larger number means the labels are
-mixed. Because the CSV was designed as a clear teaching grid, the learned tree
-classifies all 48 synthetic rows correctly.
-
-## How to read the visualization
-
-- Blue circles show synthetic rows with the blue toy label.
-- Red squares show synthetic rows with the red toy label.
-- The x-axis shows systolic blood pressure.
-- The y-axis shows maximum heart rate.
-- **Split 1** is a vertical line at `140` because it asks about an x-axis value.
-- **Split 2** is a horizontal line at `115` and exists only to the right of
-  Split 1 because only that branch asks the second question.
-- Blue and red rectangles are the three final leaves.
-- The active leaf gets a bright green outline.
-- The green diamond is the current user input.
-- The decision-path list repeats every yes/no answer in plain text.
-
-This shows why Decision Trees make axis-aligned, stair-step boundaries instead
-of the diagonal line of a linear SVM or distance neighborhoods of KNN.
-
-## File-by-file summary
-
-### `data/cardiac_triage.csv`
-
-This is the 48-row synthetic dataset. It contains a simple grid of blood
-pressure and heart-rate values plus the requested toy label. CSV is used because
-it looks like an ordinary table that a beginner can edit. No rows are patient
-records and no threshold is a clinical rule.
-
-### `decision_tree_model.py`
-
-This is the actual machine-learning algorithm. It loads and validates the CSV,
-calculates Gini impurity, tries every possible numeric split, recursively grows
-a depth-two tree, follows a prediction path, prints readable rules, and exports
-the model. It uses no scikit-learn, NumPy, or other package, so every important
-step is visible.
-
-### `train_model.py`
-
-This is the short training entry point. It loads the 48 rows, calls `fit()`,
-prints training accuracy and the complete learned `if/else` rules, and creates
-`dist/model.json`. Separating this file makes the order of training easy to see.
-
-### `start_app.py`
-
-This starts localhost using Python's built-in web server. It serves only the
-`dist` folder, begins at port `8002`, automatically tries another port if needed,
-and prints the exact address. No package installation is required.
-
-### `dist/model.json`
-
-This generated JSON file contains the complete trained tree, feature names,
-units, target-label names, node counts, impurity, thresholds, child nodes, and
-all graph points. JavaScript can read JSON directly. Do not edit it by hand; run
-`python train_model.py` after changing the CSV.
-
-### `dist/index.html`
-
-This defines the app's accessible structure: emergency warning, two labeled
-inputs, teaching result, yes/no path, responsive graph, complete learned rule,
-medical-safety explanation, and authoritative reference links. Live regions
-announce changing results to assistive technology.
-
-### `dist/styles.css`
-
-This creates the monitor-inspired visual design, readable inputs, blue and red
-result states, rectangular leaf regions, active branch styling, graph labels,
-responsive mobile layout, and short animations. Colors are paired with circles,
-squares, labels, and line styles so color is never the only clue. Reduced-motion
-settings are respected.
-
-### `dist/tree.js`
-
-This is the browser's small Decision Tree brain. It follows exported nodes,
-returns the selected label and complete path, converts leaf nodes into graph
-rectangles, and converts question nodes into vertical or horizontal split lines.
-Keeping it separate from the page makes the logic easy to test.
-
-### `dist/app.js`
-
-This connects the form, `tree.js`, and SVG visualization. It validates the two
-inputs, updates the toy result, creates the human-readable path, colors the
-active rectangle, plots the green input diamond, and redraws on screen-size
-changes. Browsers supporting WebMCP also get one structured
-`evaluate_synthetic_cardiac_tree` action that updates the same visible state.
-
-### `tests/test_decision_tree.py`
-
-These Python tests check the dataset, 100% training fit, learned `140` and `115`
-questions, all three leaf paths, invalid values, safety warning, and JSON export.
-They use Python's built-in `unittest` module.
-
-### `tests/test_browser_tree.js`
-
-These Node.js tests check the exact model used by the webpage. They verify the
-learned questions, blue and red predictions, path lengths, three rectangular
-regions, vertical and horizontal splits, important page elements, responsive
-CSS, safety wording, and invalid-input behavior.
-
-### `.gitignore`
-
-This ignores automatic Python cache files and local server logs because they are
-not source code.
-
-## Run the tests
-
-Python:
+## Verify
 
 ```powershell
 python -m unittest discover -s tests -v
-```
-
-Browser model:
-
-```powershell
 node tests/test_browser_tree.js
 ```
 
-## Medical safety references
+Checks cover the PDF's gains, split order, exact question, all training labels, stopping settings, fallback behavior, export and all 36 possible browser weather combinations. The reported 100% is training accuracy on the lecture example, not a generalization estimate.
 
-- [ACC summary of the 2021 AHA/ACC Chest Pain Guideline](https://www.acc.org/Latest-in-Cardiology/ten-points-to-remember/2021/10/27/14/06/2021-Guideline-for-Chest-Pain-gl_chestpain)
-- [NHLBI: Heart Attack Symptoms](https://www.nhlbi.nih.gov/health/heart-attack/symptoms)
-- [NHLBI: Heart Attack Diagnosis](https://www.nhlbi.nih.gov/health/heart-attack/diagnosis)
+## Saved graphs
 
-The guideline emphasizes ECG, serial cardiac troponin, structured risk
-assessment, symptoms, and other findings. If a real person may be having a heart
-attack, contact local emergency services immediately instead of entering values
-into this programming demo.
+Open [the decision graph](graphs/id3_decision.png) or its [SVG version](graphs/id3_decision.svg) directly. These show the default model and input. Regenerate them after retraining:
+
+```powershell
+python -m pip install -r requirements-plot.txt
+python plot_model.py
+python plot_model.py --outlook Rain --temp Mild --humidity High --wind Weak --output graphs/another_decision.png
+```
+
+The optional plotting script reads dist/model.json and saves PNG and SVG versions. Use --model to plot an alternate export. Matplotlib is needed only for saved plots; the training scripts and browser SVG graphs require no additional Python packages.

@@ -1,10 +1,10 @@
 {
-  "name": "Customer Team Finder — K-means for Kids",
-  "short_name": "Team Finder",
-  "description": "An offline-friendly K-means customer grouping playground.",
+  "name": "K-means Dataset Lab",
+  "short_name": "K-means Lab",
+  "description": "Learn cluster centers from CSV datasets and inspect nearest-center decisions.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f7ff",
-  "theme_color": "#f4f7ff"
+  "background_color": "#eef3f0",
+  "theme_color": "#102f35"
 }
